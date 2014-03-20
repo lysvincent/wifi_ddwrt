@@ -38,7 +38,6 @@ import StringIO
 
 import rospy
 from wifi_ddwrt.msg import *
-from pr2_msgs.msg import AccessPoint
 
 from mechanize import Browser
 from std_msgs.msg import Header
@@ -99,12 +98,15 @@ class WifiAP:
     for row in reader:
       essid = row[0]
       macattr = row[2]
-      channel = int(row[3])
+      x = row[3]
+      channel, frequency = x.split(" ", 1)
+      channel = int(channel)
       rssi = int(row[4])
       noise = int(row[5])
       beacon = int(row[6])
 
-      network = Network(macattr, essid, channel, rssi, noise, beacon)
+
+      network = Network(macattr, essid, frequency, channel, rssi, noise, beacon)
       survey.networks.append(network)
     return survey
 

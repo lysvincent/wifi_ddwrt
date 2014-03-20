@@ -27,7 +27,7 @@ class DDWRT:
         return body
 
     def connect(self, essid):
-        url = "http://%s/apply.cgi" % self.hostname
+        url = "https://%s/apply.cgi" % self.hostname
 
         args = {}
         args["submit_button"]="Wireless_Basic"
@@ -76,7 +76,7 @@ class DDWRT:
         body = self.fetch(url, args)
 
     def current_ap(self):
-        url = "http://%s/Status_Wireless.live.asp" % self.hostname
+        url = "https://%s/Status_Wireless.live.asp" % self.hostname
         body = self.fetch(url)
         
         line = None
@@ -122,7 +122,7 @@ class DDWRT:
         print essid
 
     def site_survey(self):
-        url = "http://%s/Site_Survey.asp" % self.hostname
+        url = "https://%s/Site_Survey.asp" % self.hostname
 
         body = self.fetch(url)
 
@@ -162,7 +162,7 @@ def main(argv, stdout, environ):
     progname = sys.argv[0]
     optlist, args = getopt.getopt(argv[1:], "", ["help"])
     
-    dd = DDWRT("192.168.1.1", "root", "admin")
+    dd = DDWRT("10.0.1.20", "admin", "test")
 
     if len(args) == 0:
         dd.current_ap()

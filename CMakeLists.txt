@@ -8,6 +8,7 @@ add_message_files(
   FILES
   Network.msg
   SiteSurvey.msg
+  AccessPoint.msg
 )
 
 generate_messages(DEPENDENCIES std_msgs)

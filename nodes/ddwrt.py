@@ -139,7 +139,7 @@ class WifiAP:
       parts = line.split("::", 1)
       if len(parts) == 2:
         d[parts[0]] = parts[1]
-      
+    wl_mac = d.get('wl_mac' , '')
     essid = d.get('wl_ssid', '')
     wl_channel = d.get('wl_channel', '').split()[0]
     channel = int(wl_channel)
@@ -254,7 +254,7 @@ def main(argv, stdout, environ):
   if testflag:
     test()
     return
-
+  
   loop()
 
 if __name__ == "__main__":

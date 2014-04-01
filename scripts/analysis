@@ -45,6 +45,7 @@ import tf
 from geometry_msgs.msg import *
 from nav_msgs.srv import *
 from visualization_msgs.msg import *
+from StringIO import StringIO
 
 import Image
 import ImageDraw
@@ -85,16 +86,20 @@ class WifiAnalysis:
       map_service = rospy.ServiceProxy('static_map', GetMap)
       print "Requesting the static map"
       resp = map_service()
-
+      
       size = (resp.map.info.width, resp.map.info.height)
-
       self.map_res = resp.map.info.resolution
 
+      #data = StringIO(resp.map.data)
+      #data.read()
+      #print  str(resp.map.data)
+      #print type(resp.map.data)
       # Convert map to greyscale image
-      self.im = Image.frombuffer('L', size, resp.map.data, "raw", 'L', 0, 1)
+      self.im = Image.frombuffer('L', size, str(resp.map.data), "raw", 'L', 0, 1)
       remap = {0:255, 100: 0, 255:128}
       self.im = self.im.point(lambda x: remap.get(x, 0))
-
+      
+   
       # Resize image and convert to RGB
       #self.im = self.im.resize((size[0]/2, size[1]/2), Image.BICUBIC)
       self.im = self.im.convert("RGB")
@@ -102,20 +107,21 @@ class WifiAnalysis:
     except rospy.ServiceException, e:
       print "The service call to get the map failed"
 
-
   def save_map(self):
     last_ap = None
+
     for pos in self.positions:
       map_coords = world_to_map(pos[1][0], pos[1][1], self.map_res)
       signal_quality = (MAX_RSSI - -1.0 * pos[2]) / (MAX_RSSI - MIN_RSSI)
       cell_radius = int(signal_quality * 0.1 / self.map_res)
-
+      
       draw = ImageDraw.Draw(self.im)
       top_left = (map_coords[0] - cell_radius, map_coords[1] - cell_radius)
       bottom_right = (map_coords[0] + cell_radius, map_coords[1] + cell_radius)
       
       draw.rectangle((top_left, bottom_right), fill=self.aps[pos[0]][1])
       if last_ap != pos[0]:
+        print "last_ap != pos[0]"
         size = 0.5 / self.map_res
         draw.ellipse(((map_coords[0] - size, map_coords[1] - size), 
             (map_coords[0] + size, map_coords[1] + size)), fill=self.aps[pos[0]][1])
@@ -123,10 +129,10 @@ class WifiAnalysis:
           msg = "%s:%d-%s:%d" % (aps[last_ap][0], aps[last_ap][2], aps[pos[0]][0], aps[pos[0]][2])
         else:
           msg = "%s:%d " % (aps[pos[0]][0], aps[pos[0]][2])
+          print msg
         width, height = draw.textsize(msg)
         draw.text((map_coords[0]-(width)/2, map_coords[1]-(height)/2), msg, fill="black")
-        last_ap = pos[0]
-   
+        last_ap = pos[0] 
     
     self.im.save("static_map.png", "PNG")
 
@@ -140,10 +146,10 @@ class WifiAnalysis:
       print "Got an exception that should never happen"
       return
 
-    if not self.aps.has_key(str(ap.macattr)):
-      self.aps[str(ap.macattr)] = ("ap" + str(len(self.aps) + 1), (20, 30, 0))
+    if not self.aps.has_key(str(ap.macaddr)):
+      self.aps[str(ap.macaddr)] = ("ap" + str(len(self.aps) + 1), (20, 30, 0))
 
-    self.positions.append((str(ap.macattr), trans, ap.signal))
+    self.positions.append((str(ap.macaddr), trans, ap.signal))
 
     signal_quality = (MAX_RSSI - -1.0 * ap.signal) / (MAX_RSSI - MIN_RSSI)
     radius = 0.1
@@ -176,16 +182,15 @@ class WifiAnalysis:
       marker.scale.y = radius
       marker.scale.z = z_scale
       marker.color.a = 1.0
-      marker.color.r = aps[str(ap.macattr)][1][0]
-      marker.color.g = aps[str(ap.macattr)][1][1]
-      marker.color.b = aps[str(ap.macattr)][1][2]
+      marker.color.r = aps[str(ap.macaddr)][1][0]
+      marker.color.g = aps[str(ap.macaddr)][1][1]
+      marker.color.b = aps[str(ap.macaddr)][1][2]
       self.vis_pub.publish(marker)
 
       angles = tf.transformations.euler_from_quaternion(rot)
       x += step_size * math.cos(angles[2])
       y += step_size * math.sin(angles[2])
       z_scale += (i + 1) * 0.05
-
 
     print trans
 
@@ -203,7 +208,9 @@ def analysis():
   listener = tf.TransformListener()
   wa = WifiAnalysis(listener)
   rospy.spin()
+  print "bef print"
   wa.save_map()
+  print "saved"
 
 if __name__ == '__main__':
   analysis()

@@ -1,4 +1,4 @@
-string macattr
+string macaddr
 string essid
 string frequency
 int32 channel

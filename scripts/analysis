@@ -126,12 +126,12 @@ class WifiAnalysis:
   def save_map(self):
     last_ap = None
 
-    for pos in self.positions:
+    for pos in self.positions:									     #positions are a list of macaddr,trans and ap.signal()
       map_coords = world_to_map(pos[1][0], pos[1][1], self.map_res)
       signal_quality = (MAX_RSSI - -1.0 * pos[2]) / (MAX_RSSI - MIN_RSSI)
       cell_radius = int(signal_quality * 0.1 / self.map_res)
       
-      draw = ImageDraw.Draw(self.im)
+      draw = ImageDraw.Draw(self.im)								     #labelling the image
       top_left = (map_coords[0] - cell_radius, map_coords[1] - cell_radius)
       bottom_right = (map_coords[0] + cell_radius, map_coords[1] + cell_radius)
       
@@ -144,7 +144,6 @@ class WifiAnalysis:
           msg = "%s:%d-%s:%d" % (aps[last_ap][0], aps[last_ap][2], aps[pos[0]][0], aps[pos[0]][2])
         else:
           msg = "%s:%d " % (aps[pos[0]][0], aps[pos[0]][2])
-          print msg
         width, height = draw.textsize(msg)
         draw.text((map_coords[0]-(width)/2, map_coords[1]-(height)/2), msg, fill="black")
         last_ap = pos[0] 
@@ -222,6 +221,7 @@ def analysis():
 
   listener = tf.TransformListener()
   wa = WifiAnalysis(listener)
+  print 
   rospy.spin()
   print "bef print"
   wa.save_map()

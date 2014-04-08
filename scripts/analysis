@@ -143,7 +143,7 @@ class WifiAnalysis:
         if last_ap != None:
           msg = "%s:%d-%s:%d" % (aps[last_ap][0], aps[last_ap][2], aps[pos[0]][0], aps[pos[0]][2])
         else:
-          msg = "%s:%d " % (aps[pos[0]], aps[pos[2]])
+          msg = "%s:%d " % (aps[pos[0]], aps[pos[2])
         width, height = draw.textsize(msg)
         draw.text((map_coords[0]-(width)/2, map_coords[1]-(height)/2), msg, fill="black")
         last_ap = pos[0] 

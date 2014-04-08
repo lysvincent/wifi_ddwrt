@@ -114,7 +114,7 @@ class WifiAnalysis:
       self.im = Image.frombuffer('L', size, str(resp.map.data), "raw", 'L', 0, 1)                    #create an image
       remap = {0:255, 100: 0, 255:128}
       self.im = self.im.point(lambda x: remap.get(x, 0))					     #returns a copy of the image where each pixel has been mapped through the given lookup table
-
+      self.im.save("static_map_1.png", "PNG")
            
       # Resize image and convert to RGB
       #self.im = self.im.resize((size[0]/2, size[1]/2), Image.BICUBIC)
@@ -128,7 +128,7 @@ class WifiAnalysis:
     last_ap = None
 
     for pos in self.positions:									     #positions are a list of macaddr,trans and ap.signal()
-      map_coords = world_to_map(pos[1][0], pos[1][1], self.map_res)
+      map_coords = world_to_map(pos[1][0], pos[1][1], self.map_res)				     #pos[1][0]=trans[0]
       signal_quality = (MAX_RSSI - -1.0 * pos[2]) / (MAX_RSSI - MIN_RSSI)
       cell_radius = int(signal_quality * 0.1 / self.map_res)
       
@@ -139,7 +139,7 @@ class WifiAnalysis:
       draw.rectangle((top_left, bottom_right), fill=self.aps[pos[0]][1])
       if last_ap != pos[0]:
         size = 0.5 / self.map_res
-        draw.ellipse(((map_coords[0] - size, map_coords[1] - size), 
+        draw.ellipse(((map_coords[0] - size, map_coords[1] - size), 				     #draw ellipse
             (map_coords[0] + size, map_coords[1] + size)), fill=self.aps[pos[0]][1])
         if last_ap != None:
           msg = "%s:%d-%s:%d" % (aps[last_ap][0], aps[last_ap][2], aps[pos[0]][0], aps[pos[0]][2])

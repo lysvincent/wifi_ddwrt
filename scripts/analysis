@@ -73,7 +73,8 @@ aps = { "08:60:6e:cc:79:04" : ("ap1", (255, 0, 0), 36), #red  cob-developer
 	"00:0b:0e:c8:fd:09" : ("ap21", (0, 128, 128), 48),#Teal IZS-Gast
 	"00:0b:0e:c8:fd:0d" : ("ap22", (0, 128, 0), 48),#green privateIAO
 	"00:0b:0e:c8:fd:0f" : ("ap23", (85, 107, 47), 48),#dark olive green privateIAOMAC
-	"00:0b:0e:c9:38:c3" : ("ap24", (210, 105, 30), 40) #chocolate IZS-Campus 
+	"00:0b:0e:c9:38:c3" : ("ap24", (210, 105, 30), 40), #chocolate IZS-Campus 
+        "24:77:03:57:ea:00" : ("ap25", (210, 105, 30), 36) #chocolate cob3-3-extern
 
 												}
 
@@ -143,9 +144,13 @@ class WifiAnalysis:
         if last_ap != None:
           msg = "%s:%d-%s:%d" % (aps[last_ap][0], aps[last_ap][2], aps[pos[0]][0], aps[pos[0]][2])
         else:
+<<<<<<< HEAD
           msg = "%s:%d " % (aps[pos[0]], aps[pos[2])
+=======
+          msg = "%s:%d " % (aps[pos[0]][0], aps[pos[0]][2])
+>>>>>>> c402ae072a2d2605ee2b6c92f5b01a2563da767a
         width, height = draw.textsize(msg)
-        draw.text((map_coords[0]-(width)/2, map_coords[1]-(height)/2), msg, fill="black")
+        draw.text((map_coords[0]-(width)/2, map_coords[1]-(height)/2), msg, fill="white")
         last_ap = pos[0] 
     
     self.im.save("static_map.png", "PNG")

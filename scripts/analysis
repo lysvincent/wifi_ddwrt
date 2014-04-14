@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#!/usr/bin/python
 #***********************************************************
 #* Software License Agreement (BSD License)
 #*
@@ -74,8 +74,8 @@ aps = { "08:60:6e:cc:79:04" : ("ap1", (255, 0, 0), 36), #red  cob-developer
 	"00:0b:0e:c8:fd:0d" : ("ap22", (0, 128, 0), 48),#green privateIAO
 	"00:0b:0e:c8:fd:0f" : ("ap23", (85, 107, 47), 48),#dark olive green privateIAOMAC
 	"00:0b:0e:c9:38:c3" : ("ap24", (210, 105, 30), 40), #chocolate IZS-Campus 
-        "24:77:03:57:ea:00" : ("ap25", (210, 105, 30), 36) #chocolate cob3-3-extern
-
+        "24:77:03:57:ea:00" : ("ap25", (210, 105, 30), 36), #chocolate cob3-3-extern
+	"fc:f8:ae:e4:a7:7d" : ("ap26", (85, 107, 47), 36) #dark olive green cob3-3-extern
 												}
 
 
@@ -106,15 +106,31 @@ class WifiAnalysis:
       size = (resp.map.info.width, resp.map.info.height)
       self.map_res = resp.map.info.resolution
 
+      new_data=[]
+      for point in resp.map.data:
+        if point==-1:
+          new_data.append(int(0))
+        if point==0:
+          new_data.append(int(120))
+        if point==100:
+          new_data.append(int(255))
+
+      
       #data = StringIO(resp.map.data)
       #data.read()
       #print  str(resp.map.data)
       #print type(resp.map.data)
       # Convert map to greyscale image
-      self.im = Image.frombuffer('L', size, str(resp.map.data), "raw", 'L', 0, 1)                    #create an image
+      self.im = Image.frombuffer('L', size, str(new_data), "raw", 'L', 0, 1)	                    #create an image
+      #self.im = Image.fromstring('L', size, str(new_data))    			                    #create an image
+      #self.im.show()
+      #print str(new_data)
+      #self.im = Image.fromarray(resp.map.data, 'L')
+      self.im.save("after_buffer.png", "PNG")
       remap = {0:255, 100: 0, 255:128}
+      self.im.save("before_point.png", "PNG")
       self.im = self.im.point(lambda x: remap.get(x, 0))					     #returns a copy of the image where each pixel has been mapped through the given lookup table
-      self.im.save("static_map_1.png", "PNG")
+      self.im.save("after_point.png", "PNG")
            
       # Resize image and convert to RGB
       #self.im = self.im.resize((size[0]/2, size[1]/2), Image.BICUBIC)

@@ -107,44 +107,36 @@ class WifiAnalysis:
       size = (resp.map.info.width, resp.map.info.height)
       self.map_res = resp.map.info.resolution
 
-      ##new_data=[]
-      ##for point in resp.map.data:
-      ##  if point==-1:
-      ##    new_data.append(int(120))
-      ##  if point==0:
-      ##    new_data.append(int(255))
-      ##  if point==100:
-      ##    new_data.append(int(0))
-
       new_data=[]
       for point in resp.map.data:
-      	  new_data.append(point)
+        if point==-1:
+          new_data.append(int(120))
+        if point==0:
+          new_data.append(int(255))
+        if point==100:
+          new_data.append(int(0))
 
-      print new_data      
-      remap = {-1: 120, 0: 255, 100: 0}      
-      new_data = new_data.append(lambda x: remap.get(x,120))
       print new_data
-      
-      ##remap = {0:255, 100: 0, -1:120} 
-      ##new_data = new_data_list.point(lambda x: remap.get(x, 0))    
       self.im = Image.new('L', size)
       self.im.putdata(new_data)
-      self.im.save("test1.png", "PNG")
-      ##data = StringIO(resp.map.data)
-      ##data.seek(0)
+      self.im.save("test.png", "PNG")
+      data = StringIO(resp.map.data)
+      data.seek(0)
       #print data
       #data.read()
       #print  str(resp.map.data)
       #print type(resp.map.data)
       # Convert map to greyscale image
-      ##print type(resp.map.data)
+      print type(resp.map.data)
       #self.im = Image.frombuffer('L', size, str(resp.map.data), "raw", 'L', 0, 1)
-      ##self.im = Image.frombuffer('L', size, str(new_data), "raw", 'L', 0, 1)	                    #create an image
+      self.im = Image.frombuffer('L', size, str(new_data), "raw", 'L', 0, 1)	                    #create an image
       #self.im = Image.fromstring('L', size, str(new_data))    			                    #create an image
-      ##remap = {-1: 120, 0: 255, 100: 0}								    #a dictionary
+      #print (list(self.im.getdata()))
+      self.im.save("after_buffer.png", "PNG")
+      remap = {0:255, 100: 0, 255:128}								    #a dictionary
       #self.im.save("before_point.png", "PNG")
-      ##self.im = self.im.point(lambda x: remap.get(x, 120))					     #returns a copy of the image where each pixel has been mapped through the given lookup table
-      ##self.im.save("with_point1.png", "PNG")
+      self.im = self.im.point(lambda x: remap.get(x, 0))					     #returns a copy of the image where each pixel has been mapped through the given lookup table
+      self.im.save("with_point.png", "PNG")
            
       # Resize image and convert to RGB
       #self.im = self.im.resize((size[0]/2, size[1]/2), Image.BICUBIC)

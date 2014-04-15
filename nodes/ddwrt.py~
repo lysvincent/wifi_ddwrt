@@ -98,7 +98,7 @@ class WifiAP:
     for row in reader:
       essid = row[0]
       macattr = row[2]
-      channel = int(row[3])
+      channel = row[3]
       #x = row[3]
       #print x
       #channel, frequency = x.split(" ", 1)

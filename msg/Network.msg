@@ -1,6 +1,6 @@
 string macaddr
 string essid
-string frequency
+#string frequency
 int32 channel
 int32 rssi
 int32 noise

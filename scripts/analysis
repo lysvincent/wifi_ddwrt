@@ -81,8 +81,8 @@ aps = { "08:60:6e:cc:79:04" : ("ap1", (255, 0, 0), 36), #red  cob-developer
 
 
 def world_to_map(wx, wy, resolution):
-  mx = int(wx / resolution)
-  my = int(wy / resolution)
+  mx = int(wx - resp.map.info.origin[0] / resolution)
+  my = int(wy - resp.map.info.origin[1] / resolution)
   return (mx, my) 
 
 class WifiAnalysis:

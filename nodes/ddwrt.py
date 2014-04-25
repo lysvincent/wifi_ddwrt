@@ -97,7 +97,7 @@ class WifiAP:
     reader = csv.reader(fp)
     for row in reader:
       essid = row[0]
-      macattr = row[2]
+      macaddr = row[2]
       channel = int(row[3])
       #x = row[3]
       #print x
@@ -107,10 +107,26 @@ class WifiAP:
       noise = int(row[5])
       beacon = int(row[6])
 
-      network = Network(macattr, essid, channel, rssi, noise, beacon)
+      network = Network(macaddr, essid, channel, rssi, noise, beacon)
       #network = Network(macattr, essid, frequency, channel, rssi, noise, beacon)
       survey.networks.append(network)
     return survey
+
+  def fetchR_Survey(self, survey):
+    header = Header()
+    header.stamp = rospy.Time.now()
+    r_networks = []
+    r_survey = SiteSurvey(header, r_networks)
+       
+    for s_ap in survey.networks:
+      if (s_ap.macaddr == "08:60:6e:cc:79:04" and s_ap.essid == "cob-developer"): r_networks.append(s_ap)
+      elif (s_ap.macaddr == "84:c9:b2:6a:80:e8" and s_ap.essid == "cob3-3-extern"): r_networks.append(s_ap)         
+      elif (s_ap.macaddr == "84:c9:b2:6a:81:30" and s_ap.essid == "desire-extern"): r_networks.append(s_ap)
+      elif (s_ap.macaddr == "00:0b:0e:c9:03:83" and s_ap.essid == "IZS-Campus")   : r_networks.append(s_ap)
+      elif (s_ap.macaddr == "00:0b:0e:c9:38:c1" and s_ap.essid == "eduroam")   : r_networks.append(s_ap)
+      else : x = 0
+
+    return r_survey
 
   def fetchBandwidthStats(self, interface):
     url = "http://%s/fetchif.cgi?%s" % (self.hostname, interface)
@@ -203,16 +219,19 @@ def loop():
 
   pub1 = rospy.Publisher("ddwrt/sitesurvey", SiteSurvey)
   pub2 = rospy.Publisher("ddwrt/accesspoint", AccessPoint)
-
+  pub3 = rospy.Publisher("ddwrt/r_survey", SiteSurvey)
+   
   r = rospy.Rate(.5)
   lastTime = 0
   last_ex = ''
   while not rospy.is_shutdown():
     breakUpTrash() # Needed because mechanize leaves data structures that the GC sees as uncollectable (texas#135)
     try:
-      if time.time() - lastTime > 60:
+      if time.time() - lastTime > 5:
         survey = ap.fetchSiteSurvey()
         pub1.publish(survey)
+        r_survey = ap.fetchR_Survey(survey)
+	pub3.publish(r_survey)
         lastTime = time.time()
       node = ap.fetchCurrentAP()
       if node: pub2.publish(node)

@@ -9,6 +9,8 @@ add_message_files(
   Network.msg
   SiteSurvey.msg
   AccessPoint.msg
+  CellSig.msg
+  CellAp.msg
 )
 
 generate_messages(DEPENDENCIES std_msgs)

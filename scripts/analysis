@@ -120,6 +120,8 @@ class WifiAnalysis:
           remap = {-1: 120, 0: 255, 100: 0}      
 	  data_list.append(dummy(x))
  
+     
+
       self.im = Image.new('L', size)
       self.im.putdata(data_list)
            
@@ -130,6 +132,34 @@ class WifiAnalysis:
 
     except rospy.ServiceException, e:
       print "The service call to get the map failed"
+
+  def finger_printing(self):
+    rospy.wait_for_service('static_map')
+    
+    try:
+      map_service = rospy.ServiceProxy('static_map', GetMap)
+      resp = map_service()
+
+      size = (resp.map.info.width, resp.map.info.height)
+      self.map_res = resp.map.info.resolution
+
+      #assigning RSSI to groups of cells
+      width = []
+      height = []
+      
+      w_dec = size[0]/100									     #100 cells apart
+      w_rad = w_dec/2										     #width:50 cells apart
+      w_rem = size[0]%100									     
+
+      h_dec = size[1]/100									     #100 cells apart
+      h_rad = h_dec/2										     #height:50 cells apart
+      h_rem = size[1]%100
+      
+      position
+      
+	  
+	
+
 
   def save_map(self):
     last_ap = None

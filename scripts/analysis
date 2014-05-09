@@ -90,6 +90,7 @@ class WifiAnalysis:
     self.aps = aps
     self.listener = listener
     self.positions = []
+    self.positions_a = []
     self.get_map()
     rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.survey_cb)
     rospy.Subscriber('ddwrt/accesspoint', AccessPoint, self.ap_cb)
@@ -146,7 +147,8 @@ class WifiAnalysis:
       #assigning RSSI to groups of cells
       width = []
       height = []
-      
+      r_positions = []
+
       w_dec = size[0]/100									     #100 cells apart
       w_rad = w_dec/2										     #width:50 cells apart
       w_rem = size[0]%100									     
@@ -155,9 +157,15 @@ class WifiAnalysis:
       h_rad = h_dec/2										     #height:50 cells apart
       h_rem = size[1]%100
       
-      position
+    
+      self.listener.waitForTransform('/map', '/base_link', ap.header.stamp, rospy.Duration(2.0))
+      try:
+        (trans, rot) = self.listener.lookupTransform('/map', '/base_link', ap.header.stamp)
+      except (tf.LookupException, tf.ConnectivityException):
+        print "Got an exception that should never happen"
+        return      
       
-	  
+      r_positions = 		  
 	
 
 

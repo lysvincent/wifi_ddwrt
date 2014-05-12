@@ -1,3 +1,3 @@
 #This message communicates the position and its associated APs
-int[][] cell
+int32 trans
 CellSig[] aps

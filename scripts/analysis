@@ -90,7 +90,7 @@ class WifiAnalysis:
     self.aps = aps
     self.listener = listener
     self.positions = []
-    self.positions_a = []
+    self.fingerprints = []
     self.get_map()
     rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.survey_cb)
     rospy.Subscriber('ddwrt/accesspoint', AccessPoint, self.ap_cb)
@@ -132,41 +132,7 @@ class WifiAnalysis:
       
 
     except rospy.ServiceException, e:
-      print "The service call to get the map failed"
-
-  def finger_printing(self):
-    rospy.wait_for_service('static_map')
-    
-    try:
-      map_service = rospy.ServiceProxy('static_map', GetMap)
-      resp = map_service()
-
-      size = (resp.map.info.width, resp.map.info.height)
-      self.map_res = resp.map.info.resolution
-
-      #assigning RSSI to groups of cells
-      width = []
-      height = []
-      r_positions = []
-
-      w_dec = size[0]/100									     #100 cells apart
-      w_rad = w_dec/2										     #width:50 cells apart
-      w_rem = size[0]%100									     
-
-      h_dec = size[1]/100									     #100 cells apart
-      h_rad = h_dec/2										     #height:50 cells apart
-      h_rem = size[1]%100
-      
-    
-      self.listener.waitForTransform('/map', '/base_link', ap.header.stamp, rospy.Duration(2.0))
-      try:
-        (trans, rot) = self.listener.lookupTransform('/map', '/base_link', ap.header.stamp)
-      except (tf.LookupException, tf.ConnectivityException):
-        print "Got an exception that should never happen"
-        return      
-      
-      r_positions = 		  
-	
+      print "The service call to get the map failed"	
 
 
   def save_map(self):
@@ -242,6 +208,7 @@ class WifiAnalysis:
       marker.scale.y = radius
       marker.scale.z = z_scale
       marker.color.a = 1.0
+     
       marker.color.r = aps[str(ap.macaddr)][1][0]
       marker.color.g = aps[str(ap.macaddr)][1][1]
       marker.color.b = aps[str(ap.macaddr)][1][2]
@@ -261,6 +228,26 @@ class WifiAnalysis:
     except (tf.LookupException, tf.ConnectivityException):
       print "Got an exception that should never happen"
       return
+
+    r_networks = []    
+
+
+    for s_ap in survey.networks:
+      if (s_ap.macaddr == "08:60:6e:cc:79:04" and s_ap.essid == "cob-developer"): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
+      elif (s_ap.macaddr == "84:c9:b2:6a:80:e8" and s_ap.essid == "cob3-3-extern"): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
+      elif (s_ap.macaddr == "84:c9:b2:6a:81:30" and s_ap.essid == "desire-extern"): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
+      elif (s_ap.macaddr == "00:0b:0e:c9:03:83" and s_ap.essid == "IZS-Campus")   : r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
+      elif (s_ap.macaddr == "00:0b:0e:c9:38:c1" and s_ap.essid == "eduroam")   : r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
+      else : x = 0
+
+    last_trans=[0,0]
+    diff_x=abs(trans[0]-last_trans[0])
+    diff_y=abs(trans[1]-last_trans[1])
+    if diff_x > 1 or diff_y > 1:
+    	self.fingerprints.append((trans,r_networks))
+	last_trans=trans
+	
+    print self.fingerprints[-1]
 
 def analysis():
   rospy.init_node('wifi_analysis', anonymous=True)

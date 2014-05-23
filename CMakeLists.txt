@@ -19,9 +19,10 @@ catkin_package(CATKIN_DEPENDS std_msgs)
 
 install(PROGRAMS 
    nodes/ddwrt.py
-   scripts/analysis
+   scripts/analysis.py
    scripts/ddwrt_sim.py
    scripts/monitor
    scripts/ddwrt_config.py
    scripts/wanip.py
+   scripts/retrieve
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

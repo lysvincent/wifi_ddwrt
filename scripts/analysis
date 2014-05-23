@@ -90,7 +90,7 @@ class WifiAnalysis:
     self.aps = aps
     self.listener = listener
     self.positions = []
-    self.fingerprints = []
+    self.fingerprints = {}
     self.get_map()
     rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.survey_cb)
     rospy.Subscriber('ddwrt/accesspoint', AccessPoint, self.ap_cb)
@@ -231,7 +231,6 @@ class WifiAnalysis:
 
     r_networks = []    
 
-
     for s_ap in survey.networks:
       if (s_ap.macaddr == "08:60:6e:cc:79:04" and s_ap.essid == "cob-developer"): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
       elif (s_ap.macaddr == "84:c9:b2:6a:80:e8" and s_ap.essid == "cob3-3-extern"): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
@@ -244,10 +243,11 @@ class WifiAnalysis:
     diff_x=abs(trans[0]-last_trans[0])
     diff_y=abs(trans[1]-last_trans[1])
     if diff_x > 1 or diff_y > 1:
-    	self.fingerprints.append((trans,r_networks))
+    	self.fingerprints[trans]=r_networks
 	last_trans=trans
 	
-    print self.fingerprints[-1]
+    if self.fingerprints.keys():
+	    print self.fingerprints.keys()[0]
 
 def analysis():
   rospy.init_node('wifi_analysis', anonymous=True)

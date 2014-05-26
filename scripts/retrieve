@@ -61,14 +61,14 @@ class Fingerprints:
 
 
     if diff_x > self.cell_width or diff_y > self.cell_height:
-        pos_x= int((trans[0] + self.map_origx)*self.map_res)
-	pos_y= int((trans[1] + self.map_origy)*self.map_res)
+        pos_x= int(trans[0] + self.map_origx)
+	pos_y= int(trans[1] + self.map_origy)
         self.fingerprints[pos_x,pos_y]=r_networks
         last_trans=trans
 
     else:
-        pos_x= int((trans[0] + self.map_origx)*self.map_res)
-        pos_y= int((trans[1] + self.map_origy)*self.map_res)
+        pos_x= int(trans[0] + self.map_origx)
+        pos_y= int(trans[1] + self.map_origy)
         self.fingerprints[pos_x,pos_y]=r_networks
 	    
   def retrieve(self):

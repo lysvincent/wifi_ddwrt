@@ -1,0 +1,12 @@
+<launch>
+
+        <rosparam command="delete" param = "/Fingerprints"/>
+
+        <node pkg="wifi_ddwrt" name="fingerprinting" type="fingerprinting" output="log">          
+            
+            <rosparam file="$(find wifi_ddwrt)/config/normal_setup.yaml" command="load"/>
+        
+        </node> 
+
+</launch>
+

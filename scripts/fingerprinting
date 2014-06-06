@@ -50,7 +50,7 @@ class Fingerprints:
 
         r_networks = []
 
-        print rospy.get_param('macaddr_1')
+        #print rospy.get_param('macaddr_1')
         for s_ap in survey.networks:
             if (s_ap.macaddr == rospy.get_param('macaddr_1') and rospy.get_param('essid_1')): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
             elif (s_ap.macaddr == rospy.get_param('macaddr_2') and rospy.get_param('essid_2')): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
@@ -104,17 +104,12 @@ class Fingerprints:
                 return round(pos,1)
 
     def save_fingerprints(self):
-        #with open('gogogo.pickle', 'wb') as handle:
-        #    pickle.dump(self.fingerprints, handle)
-        apple = "apple"
-        pickle.dump(apple, open("retrieve.pkl","wb"))
-        #with open('data.txt', 'w') as outfile:
-        #    json.dump(apple, outfile)
-        print apple
+        
+        pickle.dump(self.fingerprints, open("fingerprints.pkl","wb"))
+        
 
 def fingerPrints():
-    #c_width = float(argv[1])
-    #c_height = float(argv[2])
+    
     c_width= float(rospy.get_param('c_width'))
     c_height= float(rospy.get_param('c_height'))
     if c_width > 5:

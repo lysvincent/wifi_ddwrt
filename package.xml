@@ -25,7 +25,7 @@
   <run_depend>nav_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>visualization_msgs</run_depend>
-
+  <run_depend>json</run_depend>
   <run_depend>python-mechanize</run_depend>
 
 </package>

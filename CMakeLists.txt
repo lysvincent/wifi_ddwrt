@@ -24,7 +24,7 @@ install(PROGRAMS
    scripts/monitor
    scripts/ddwrt_config.py
    scripts/wanip.py
-   scripts/retrieve
+   scripts/fingerprinting
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY   

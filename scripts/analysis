@@ -256,7 +256,6 @@ def analysis():
   wa = WifiAnalysis(listener) 
   rospy.spin()
   wa.save_map()
-  print "saved"
 
 if __name__ == '__main__':
   analysis()

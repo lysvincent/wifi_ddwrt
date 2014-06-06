@@ -2,115 +2,143 @@
 
 import sys,string
 import rospy
+import roslaunch
 from wifi_ddwrt.msg import *
 import analysis
 import math
 import tf
+import pickle
+import json
 from geometry_msgs.msg import *
 from nav_msgs.srv import *
 from visualization_msgs.msg import *
 from StringIO import StringIO
 
 class Fingerprints:
-  def __init__(self,listener,cell_height,cell_width):
-    self.aps = analysis.aps
-    self.listener = listener
-    self.cell_height = cell_height
-    self.cell_width = cell_width
-    self.fingerprints = {}
-    self.get_map()
-    rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.survey_cb)
+    def __init__(self,listener,cell_height,cell_width):
+        self.aps = analysis.aps
+        self.listener = listener
+        self.cell_height = cell_height
+        self.cell_width = cell_width
+        print self.cell_width
+        self.fingerprints = {}
+        self.get_map()
+        rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.survey_cb)
 
-  def get_map(self):
-    rospy.wait_for_service('static_map')
+    def get_map(self):
+        rospy.wait_for_service('static_map')
+        try:
+            map_service = rospy.ServiceProxy('static_map', GetMap)
+            print "Requesting the static map"
+            resp = map_service()
 
-    try:
-      map_service = rospy.ServiceProxy('static_map', GetMap)
-      print "Requesting the static map"
-      resp = map_service()
-
-      size = (resp.map.info.width, resp.map.info.height)
-      self.map_res = resp.map.info.resolution
-      self.map_origx= resp.map.info.origin.position.x
-      self.map_origy= resp.map.info.origin.position.y
+            size = (resp.map.info.width, resp.map.info.height)
+            self.map_res = resp.map.info.resolution
+            self.map_origx= resp.map.info.origin.position.x
+            self.map_origy= resp.map.info.origin.position.y
       
-    except rospy.ServiceException, e:
-      print "The service call to get the map failed"
+        except rospy.ServiceException, e:
+            print "The service call to get the map failed"
 
-  def survey_cb(self, survey):
-    #we need to get the pose of the robot at the time the survey came in
-    try:
-      (trans, rot) = self.listener.lookupTransform('/map', '/base_link', rospy.Time(0))
-    except (tf.LookupException, tf.ConnectivityException):
-      print "Got an exception that should never happen"
-      return
+    def survey_cb(self, survey):
+        #we need to get the pose of the robot at the time the survey came in
+        try:
+            (trans, rot) = self.listener.lookupTransform('/map', '/base_link', rospy.Time(0))
+        except (tf.LookupException, tf.ConnectivityException):
+            print "Got an exception that should never happen"
+            return
 
-    r_networks = []
+        r_networks = []
 
-    for s_ap in survey.networks:
-      if (s_ap.macaddr == "08:60:6e:cc:79:04" and s_ap.essid == "cob-developer"): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
-      elif (s_ap.macaddr == "84:c9:b2:6a:80:e8" and s_ap.essid == "cob3-3-extern"): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
-      elif (s_ap.macaddr == "84:c9:b2:6a:81:30" and s_ap.essid == "desire-extern"): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
-      elif (s_ap.macaddr == "00:0b:0e:c9:03:83" and s_ap.essid == "IZS-Campus")   : r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
-      elif (s_ap.macaddr == "00:0b:0e:c9:38:c1" and s_ap.essid == "eduroam")   : r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
-      else : x = 0
-    
-    last_trans=[0,0]
-    diff_x=abs(trans[0]-last_trans[0])
-    diff_y=abs(trans[1]-last_trans[1])
+        print rospy.get_param('macaddr_1')
+        for s_ap in survey.networks:
+            if (s_ap.macaddr == rospy.get_param('macaddr_1') and rospy.get_param('essid_1')): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
+            elif (s_ap.macaddr == rospy.get_param('macaddr_2') and rospy.get_param('essid_2')): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
+            elif (s_ap.macaddr == rospy.get_param('macaddr_3') and rospy.get_param('essid_3')): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
+            elif (s_ap.macaddr == rospy.get_param('macaddr_4') and rospy.get_param('essid_4'))   : r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
+            elif (s_ap.macaddr == rospy.get_param('macaddr_5') and rospy.get_param('essid_5'))   : r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
+            else : x = 0
 
+        last_trans=[0,0]
+        diff_x = round(abs(trans[0]-last_trans[0]),2)
+        diff_y = round(abs(trans[1]-last_trans[1]),2)
+        #print self.cell_width,type(self.cell_width), diff_x >= self.cell_width or diff_y >= self.cell_height
 
-    if diff_x > self.cell_width or diff_y > self.cell_height:
-        pos_x= int(trans[0] + self.map_origx)
-	pos_y= int(trans[1] + self.map_origy)
-        self.fingerprints[pos_x,pos_y]=r_networks
-        last_trans=trans
+        if diff_x >= self.cell_width or diff_y >= self.cell_height :
+            pos_x= self.rounding(trans[0],self.cell_width)
+            pos_y= self.rounding(trans[1],self.cell_height)
+            self.fingerprints[pos_x,pos_y]=r_networks
+            last_trans=trans
 
-    else:
-        pos_x= int(trans[0] + self.map_origx)
-        pos_y= int(trans[1] + self.map_origy)
-        self.fingerprints[pos_x,pos_y]=r_networks
-	    
-  def retrieve(self):
-    pos_x = int(raw_input("Position x= "))
-    pos_y = int(raw_input("Position y= "))
-    
-    while not((pos_x,pos_y) in self.fingerprints):
-        print "Position specified does not exist/available.Please specify another position."
-        pos_x = int(raw_input("Position x= "))
-        pos_y = int(raw_input("Position y= "))
-    print self.fingerprints[pos_x,pos_y]
+    def retrieve(self):
+        pos_x = float(raw_input("Position x= "))
+        pos_y = float(raw_input("Position y= "))
+        
+        while not((pos_x,pos_y) in self.fingerprints):
+            print "Position specified does not exist/available.Please specify another position."
+            print self.fingerprints.keys()
+            pos_x = float(raw_input("Position x= "))
+            if pos_x == -1000:
+                return
+            pos_y = float(raw_input("Position y= "))
 
-    return self.fingerprints[pos_x,pos_y]
+        pos_x = self.rounding(pos_x,self.cell_width)
+        pos_y = self.rounding(pos_y,self.cell_height)
+         
+        print self.fingerprints[pos_x,pos_y]
 
+        return self.fingerprints[pos_x,pos_y]
 
-def fingerPrints(argv):
-  progname = argv[0]
-  c_width = argv[1]
-  c_height = argv[2]
+    def rounding(self, pos, factor):
+        counter = 0
+        hoF = float(factor)/2
+        while pos/factor >= 1.0:
+            pos = pos-factor
+            counter += 1
+        else:
+            if float(pos)/hoF >= hoF:
+                pos = factor*(counter+1)
+                return round(pos,1)
+            else:
+                pos = counter*factor
+                return round(pos,1)
 
-  if c_width > "5":
+    def save_fingerprints(self):
+        #with open('gogogo.pickle', 'wb') as handle:
+        #    pickle.dump(self.fingerprints, handle)
+        apple = "apple"
+        pickle.dump(apple, open("retrieve.pkl","wb"))
+        #with open('data.txt', 'w') as outfile:
+        #    json.dump(apple, outfile)
+        print apple
+
+def fingerPrints():
+    #c_width = float(argv[1])
+    #c_height = float(argv[2])
+    c_width= float(rospy.get_param('c_width'))
+    c_height= float(rospy.get_param('c_height'))
+    if c_width > 5:
         c_width = 5
         print "Specified cell width is too large. Cell width is set to 5"
-  elif c_width < "1":
+    elif c_width < 1:
         c_width = 1
         print "Specified cell width is too small. Cell width is set to 1"
-  else : x = 0
+    else : x = 0
 
-  if c_height > "5":
+    if c_height > 5:
         c_height = 5
         print "Specified cell height is too large. Cell height is set to 5"
-  elif c_height < "1":
+    elif c_height < 1:
         c_height = 1
         print "Specified cell height is too small. Cell height is set to 1"
-  else : x = 0
-  
-  rospy.init_node('Fingerprints', anonymous=True)
-  listener = tf.TransformListener()
-  fp = Fingerprints(listener,c_width,c_height)
-  if fp.fingerprints.keys:
-      fp.retrieve()
-  rospy.spin()
-  
+    else : x = 0
+
+    rospy.init_node('fingerprinting', anonymous=True)
+    listener = tf.TransformListener()
+    fp = Fingerprints(listener,c_width,c_height)
+    #fp.retrieve()
+    rospy.spin()
+    fp.save_fingerprints()
+    
 if __name__ == '__main__':
-  fingerPrints(sys.argv)
+    fingerPrints()

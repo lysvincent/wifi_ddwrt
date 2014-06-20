@@ -25,6 +25,7 @@ install(PROGRAMS
    scripts/ddwrt_config.py
    scripts/wanip.py
    scripts/fingerprinting
+   scripts/opendict
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY   

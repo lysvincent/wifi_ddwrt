@@ -67,7 +67,7 @@ class Fingerprints:
         if diff_x >= self.cell_width or diff_y >= self.cell_height :
             pos_x= self.rounding(trans[0],self.cell_width)
             pos_y= self.rounding(trans[1],self.cell_height)
-            self.fingerprints[pos_x,pos_y]=r_networks
+            self.fingerprints[pos_x,pos_y]=tuple(r_networks)
             last_trans=trans
 
     def retrieve(self):

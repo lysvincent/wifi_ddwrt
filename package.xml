@@ -19,7 +19,8 @@
   <run_depend>rospy</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>pickle</run_depend>
-
+  <run_depend>scipy</run_depend>>
+  <run_depend>collections</run_depend>>
   <run_depend>std_msgs</run_depend>>
   <run_depend>pr2_msgs</run_depend>
   <run_depend>nav_msgs</run_depend>

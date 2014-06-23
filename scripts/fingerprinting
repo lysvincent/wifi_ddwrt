@@ -50,7 +50,7 @@ class Fingerprints:
 
         r_networks = []
 
-        #print rospy.get_param('macaddr_1')
+
         for s_ap in survey.networks:
             if (s_ap.macaddr == rospy.get_param('macaddr_1') and rospy.get_param('essid_1')): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
             elif (s_ap.macaddr == rospy.get_param('macaddr_2') and rospy.get_param('essid_2')): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))

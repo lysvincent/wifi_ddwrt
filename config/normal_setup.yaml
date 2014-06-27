@@ -10,3 +10,4 @@
 /essid_4: IZS-Campus
 /macaddr_5: "00:0b:0e:c9:38:c1"
 /essid_5: eduroam
+/database: fingerprints.pkl

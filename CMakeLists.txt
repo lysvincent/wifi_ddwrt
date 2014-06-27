@@ -25,7 +25,7 @@ install(PROGRAMS
    scripts/ddwrt_config.py
    scripts/wanip.py
    scripts/fingerprinting
-   scripts/approximate.py
+   scripts/approximate
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY   

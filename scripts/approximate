@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import sys,string
-#from scipy import spatial
 from collections import defaultdict
 import rospy
 import roslaunch
@@ -19,49 +18,60 @@ class PosEstimate:
   def __init__(self, database):
     #print "database=", database
     self.dic = pickle.load(open( database,"rb"))
+    #print "unsorted:", self.dic.items()
+    self.dic = self.sort_by_key(self.dic)
+    #print "sorted:", self.dic.items()
     rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.survey_cb)
     #pub = rospy.Publisher('ddwrt/positions', Array)
-
     self.inv_fp = {}
     self.fp_keys = []
     self.l_rssi = []
     self.rssi_dict = {}
-    #print dic.keys(), "=", type(dic.keys())
-    #print "a=", type(a[0])
-    #print "a=", type(list(a[0]))
-    #print "b=", a[0]
-    #print "b[0]=", a[0][0]
 
-    #print "dic(b)=", dic[b], "is", type(dic[b])
+
+  def sort_by_key(self,u_dic):
+    s_dic ={}
+    
+    for key in sorted(u_dic.iterkeys()):
+      sorted_by_second = sorted(data, key=lambda list: list[1])
+
+    return s_dic
 
   def invert_keys(self):
     inv_fp = defaultdict(list)
     #inv_fp = {v:k for k, v in self.dic.items()}
     keys_list = self.dic.keys()
     values_list = self.dic.values()
+
     for x in range(len(self.dic.items())):
-      inv_fp[values_list[x]] = keys_list[x]
-    #print "inverted_dic=", inv_fp.items()
+      inv_fp[values_list[x]].append(keys_list[x])
+      #print "values_list[x]:", values_list[x]   
+      #print "keys_list[x]:", keys_list[x]
+
+    #print "inverted_dic=", inv_fp
+    inv_fp = self.sort_by_key(inv_fp)
+    print inv_fp
     return inv_fp
-    #print "rev_dic.keys=", fp_keys
-    #print "first ap of the first key=", fp_keys[0][0]
-    #print "the ssid=", fp_keys[0][0][0]
-    #print "Rssi=", fp_keys[0][0][2]
-    
+  
   def get_aps_rssi_list(self,fp_keys):
     l_rssi=[]
-
+    counter = 0
     for fp_key in fp_keys:
+      counter += 1
+      print "# fp_key:", len(fp_keys)
+      l_rssi.append
       for ap in fp_key:
-        l_rssi.append([row[])
+        
         #print ap[2]
         l_rssi.append(ap[2])
-    
+         
     return l_rssi
 
   def match_rssi_to_pos(self,l_rssi):
     nt_conv_dict = defaultdict(list)
     l_values = self.dic.values()
+    print "l_values:", len(l_values)
+    print "l_rssi:", len(l_rssi)
     #nt_conv_dict = {v:k for v in l_rssi, k in l_values}
     for x in range(len(l_rssi)):
       nt_conv_dict[l_rssi[x]] = l_values[x]
@@ -87,28 +97,31 @@ class PosEstimate:
     r_networks = []
 
     for s_ap in survey.networks:
-      if (s_ap.macaddr == rospy.get_param('macaddr_1') and rospy.get_param('essid_1'))  : r_networks.append((s_ap.macaddr,s_ap.rssi))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_2') and rospy.get_param('essid_2')): r_networks.append((s_ap.macaddr,s_ap.rssi))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_3') and rospy.get_param('essid_3')): r_networks.append((s_ap.macaddr,s_ap.rssi))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_4') and rospy.get_param('essid_4')): r_networks.append((s_ap.macaddr,s_ap.rssi))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_5') and rospy.get_param('essid_5')): r_networks.append((s_ap.macaddr,s_ap.rssi))
+      if (s_ap.macaddr == rospy.get_param('macaddr_1') and rospy.get_param('essid_1'))  : r_networks.append((s_ap.rssi,s_ap.macaddr))
+      elif (s_ap.macaddr == rospy.get_param('macaddr_2') and rospy.get_param('essid_2')): r_networks.append((s_ap.rssi,s_ap.macaddr))
+      elif (s_ap.macaddr == rospy.get_param('macaddr_3') and rospy.get_param('essid_3')): r_networks.append((s_ap.rssi,s_ap.macaddr))
+      elif (s_ap.macaddr == rospy.get_param('macaddr_4') and rospy.get_param('essid_4')): r_networks.append((s_ap.rssi,s_ap.macaddr))
+      elif (s_ap.macaddr == rospy.get_param('macaddr_5') and rospy.get_param('essid_5')): r_networks.append((s_ap.rssi,s_ap.macaddr))
       else : x = 0
     
     r_rssi_list = []
     r_networks = numpy.asarray(r_networks)
 
     for x in range(len(r_networks)):
-      r_rssi_list.append(r_networks[x][1])
+      r_rssi_list.append(r_networks[x][0])
 
+    r_rssi_list = sorted(r_rssi_list)
     pe.convert(r_rssi_list)
   
 def approximate():
   rospy.init_node('approximate', anonymous=True)
   #stri = rospy.get_param('database')
-  stri = "fingerprints.pkl"
+  stri = "fingerprints_test.pkl"
   pe = PosEstimate(stri)
-  pe.inv_fp = pe.invert_keys()
+  pe.inv_fp = pe.invert_keys()									#an inverted dic.
+  #print "inv_fp.items():", pe.inv_fp.items()
   pe.fp_keys = list(pe.inv_fp.keys()) 
+  #print len(pe.fp_keys)
   pe.l_rssi = pe.get_aps_rssi_list(pe.fp_keys)
   #print "len(l_rssi):", len(pe.l_rssi)
   #print "len(l_values):", len(pe.dic.values())

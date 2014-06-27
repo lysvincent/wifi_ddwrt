@@ -104,8 +104,8 @@ class Fingerprints:
                 return round(pos,1)
 
     def save_fingerprints(self):
-        
-        pickle.dump(self.fingerprints, open("fingerprints.pkl","wb"))
+        database = rospy.get_param('database')
+        pickle.dump(self.fingerprints, open(database ,"wb"))
         
 
 def fingerPrints():

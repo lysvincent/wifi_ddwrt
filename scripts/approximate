@@ -16,11 +16,7 @@ from StringIO import StringIO
 
 class PosEstimate:
   def __init__(self, database):
-    #print "database=", database
     self.dic = pickle.load(open( database,"rb"))
-    #print "unsorted:", self.dic.items()
-    #self.dic = self.sort_by_key(self.dic)
-    #print "sorted:", self.dic.items()
     rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.survey_cb)
     #pub = rospy.Publisher('ddwrt/positions', Array)
     self.inv_fp = {}
@@ -28,12 +24,12 @@ class PosEstimate:
     self.l_rssi = []
     self.rssi_dict = {}
 
-  def sort_by_mac(self,u_dic):
+  def sort_by_mac(self,u_dic,arr_pos):
     s_dic = defaultdict(list)
     u_dic_values = list(u_dic.values())
     counter = 0
     for key_ in u_dic.keys():
-      n_key = tuple(sorted(list(key_), key=lambda list: list[1]))
+      n_key = tuple(sorted(list(key_), key=lambda list: list[arr_pos]))
       s_dic[n_key].append(u_dic_values[counter])
       counter += 1
     
@@ -47,11 +43,8 @@ class PosEstimate:
 
     for x in range(len(self.dic.items())):
       inv_fp[values_list[x]].append(keys_list[x])
-      #print "values_list[x]:", values_list[x]   
-      #print "keys_list[x]:", keys_list[x]
 
-    inv_fp = self.sort_by_mac(inv_fp)
-    #print inv_fp
+    inv_fp = self.sort_by_mac(inv_fp, 1)
     return inv_fp
   
   def get_aps_rssi_list(self,fp_keys):
@@ -67,7 +60,6 @@ class PosEstimate:
 
   def match_rssi_to_pos(self,l_rssi,l_pos):
     nt_conv_dict = defaultdict(list)
- 
     for x in range(len(l_rssi)):
       nt_conv_dict[tuple(l_rssi[x])] = l_pos[x]
 
@@ -78,17 +70,9 @@ class PosEstimate:
     a = list(islice(iterable, n))
     return a
 
-  def convert(self,r_rssi_list):
-    dic_rssi = numpy.asarray(self.rssi_dict.keys())
-    fact_dic = {}
-    r_rssi_list = numpy.asarray(r_rssi_list)
-    for x in range(len(self.rssi_dict.keys())):
-      dist = numpy.linalg.norm(r_rssi_list - dic_rssi[x])
-      fact_dic[dist] = self.rssi_dict[dic_rssi[x]]
-      
-  
   def survey_cb(self, survey):
 
+    print "in cb"
     r_networks = []
 
     for s_ap in survey.networks:
@@ -102,28 +86,40 @@ class PosEstimate:
     r_rssi_list = []
     r_networks = numpy.asarray(r_networks)
 
+    r_networks = tuple(sorted(r_networks, key=lambda list: list[1]))
+    
     for x in range(len(r_networks)):
-      r_rssi_list.append(r_networks[x][0])
+      r_rssi_list.append(int(r_networks[x][0]))
 
-    r_rssi_list = sorted(r_rssi_list)
-    pe.convert(r_rssi_list)
+    self.convert(r_rssi_list)
   
+  def convert(self,r_rssi_list):
+    dic_rssi = self.rssi_dict.keys()
+    dic_rssi_arr = numpy.asarray(dic_rssi)
+    facto_list = []
+    r_rssi_list = numpy.asarray(r_rssi_list)
+    for x in range(len(self.rssi_dict.keys())):
+      dist = numpy.linalg.norm(r_rssi_list - dic_rssi_arr[x])
+      a = dist
+      b = self.rssi_dict[dic_rssi[x]]
+      facto_list.append([a,b])
+
+    print "final_list:", facto_list
+
+  def calculate_covariance(self):
+    
+
+
 def approximate():
   rospy.init_node('approximate', anonymous=True)
   stri = rospy.get_param('database')
-  #stri = "fingerprints_test.pkl"
   pe = PosEstimate(stri)
-  pe.inv_fp = pe.invert_keys()									#an inverted dic.
-  #print "inv_fp.items():", pe.inv_fp.items()
+  pe.inv_fp = pe.invert_keys()									   #an inverted dic.
   pe.fp_keys = list(pe.inv_fp.keys())
   pe.fp_values = list(pe.inv_fp.values())
-  #print len(pe.fp_keys)
   pe.l_rssi = pe.get_aps_rssi_list(pe.fp_keys)
-  #print "len(l_rssi):", len(pe.l_rssi)
-  #print "len(l_values):", len(pe.dic.values())
   pe.rssi_dict = pe.match_rssi_to_pos(pe.l_rssi,pe.fp_values)
-  print "rssi_dict:",pe.rssi_dict
-  
+  rospy.spin()
      
 if __name__ == '__main__':
   approximate()

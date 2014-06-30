@@ -1,4 +1,4 @@
-/database: fingerprints.pkl
+/database: fingerprints_test.pkl
 /macaddr_1: "08:60:6e:cc:79:04"
 /essid_1: cob-developer
 /macaddr_2: "84:c9:b2:6a:80:e8"

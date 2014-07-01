@@ -18,7 +18,9 @@ class PosEstimate:
   def __init__(self, database):
     self.dic = pickle.load(open( database,"rb"))
     rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.survey_cb)
-    #pub = rospy.Publisher('ddwrt/positions', Array)
+    self.listener = tf.TransformListener()
+    self.pub = rospy.Publisher('ddwrt/posewithcovariance', PoseWithCovarianceStamped)
+    self.pose_cov = PoseWithCovarianceStamped()
     self.inv_fp = {}
     self.fp_keys = []
     self.l_rssi = []
@@ -72,7 +74,6 @@ class PosEstimate:
 
   def survey_cb(self, survey):
 
-    print "in cb"
     r_networks = []
 
     for s_ap in survey.networks:
@@ -98,17 +99,38 @@ class PosEstimate:
     dic_rssi_arr = numpy.asarray(dic_rssi)
     facto_list = []
     r_rssi_list = numpy.asarray(r_rssi_list)
+
     for x in range(len(self.rssi_dict.keys())):
       dist = numpy.linalg.norm(r_rssi_list - dic_rssi_arr[x])
       a = dist
-      b = self.rssi_dict[dic_rssi[x]]
+      b = self.rssi_dict[dic_rssi[x]][0]								#[0] is added due to the extra set of square brackets
       facto_list.append([a,b])
 
-    print "final_list:", facto_list
+    #print "final_list:", facto_list
+    self.calculate_covariance(facto_list)
 
-  def calculate_covariance(self):
+  def calculate_covariance(self, facto_list):
+    s_facto_list = sorted(facto_list)
+    dummy = len(s_facto_list)/10
     
+    for x in range(dummy+1):
+      arr_pos = numpy.array(s_facto_list[x][1]).T
 
+    covar_xy = numpy.cov(arr_pos)[0][1] 
+    mean_xy  = arr_pos.mean(axis=1)									# [x,y]
+    
+    (trans, rot) = self.listener.lookupTransform('/map', '/base_link', rospy.Time(0))
+    self.pose_cov.pose.pose.position.x    = mean_xy[0]
+    self.pose_cov.pose.pose.position.y    = mean_xy[1]
+    self.pose_cov.pose.pose.position.z    = trans[2]
+    self.pose_cov.pose.pose.orientation.x = rot[0]
+    self.pose_cov.pose.pose.orientation.y = rot[1]
+    self.pose_cov.pose.pose.orientation.z = rot[2]
+    self.pose_cov.pose.pose.orientation.w = rot[3]
+    self.pose_cov.pose.covariance[1]      = covar_xy
+    self.pose_cov.pose.covariance[6]      = covar_xy
+    
+    self.pub.publish(self.pose_cov)
 
 def approximate():
   rospy.init_node('approximate', anonymous=True)

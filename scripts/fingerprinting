@@ -23,7 +23,18 @@ class Fingerprints:
         print self.cell_width
         self.fingerprints = {}
         self.get_map()
+        self.num_aps = rospy.get_param('num_aps')
+        self.macadd_list = self.get_list_of_specified_macadd(self.num_aps)
         rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.survey_cb)
+
+    def get_list_of_specified_macadd(self,num_aps):
+      macadd_list = []
+      for dummy in range(num_aps):
+        statement = 'macaddr_%d' %dummy
+        macadd_list.append(rospy.get_param(statement))
+
+      macadd_list = sorted(macadd_list)
+      return macadd_list
 
     def get_map(self):
         rospy.wait_for_service('static_map')
@@ -48,27 +59,49 @@ class Fingerprints:
             print "Got an exception that should never happen"
             return
 
-        r_networks = []
+        wanted_networks = []
 
-
-        for s_ap in survey.networks:
-            if (s_ap.macaddr == rospy.get_param('macaddr_1') and rospy.get_param('essid_1')): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
-            elif (s_ap.macaddr == rospy.get_param('macaddr_2') and rospy.get_param('essid_2')): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
-            elif (s_ap.macaddr == rospy.get_param('macaddr_3') and rospy.get_param('essid_3')): r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
-            elif (s_ap.macaddr == rospy.get_param('macaddr_4') and rospy.get_param('essid_4'))   : r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
-            elif (s_ap.macaddr == rospy.get_param('macaddr_5') and rospy.get_param('essid_5'))   : r_networks.append((s_ap.essid,s_ap.macaddr,s_ap.rssi))
+        for seen_ap in survey.networks:
+            if (seen_ap.macaddr == rospy.get_param('macaddr_0') and rospy.get_param('essid_0'))  : related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
+            elif (seen_ap.macaddr == rospy.get_param('macaddr_1') and rospy.get_param('essid_1')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
+            elif (seen_ap.macaddr == rospy.get_param('macaddr_2') and rospy.get_param('essid_2')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
+            elif (seen_ap.macaddr == rospy.get_param('macaddr_3') and rospy.get_param('essid_3')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
+            elif (seen_ap.macaddr == rospy.get_param('macaddr_4') and rospy.get_param('essid_4')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
+            elif (seen_ap.macaddr == rospy.get_param('macaddr_5') and rospy.get_param('essid_5')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
+            elif (seen_ap.macaddr == rospy.get_param('macaddr_6') and rospy.get_param('essid_6')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
+            elif (seen_ap.macaddr == rospy.get_param('macaddr_7') and rospy.get_param('essid_7')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
+            elif (seen_ap.macaddr == rospy.get_param('macaddr_8') and rospy.get_param('essid_8')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
+            elif (seen_ap.macaddr == rospy.get_param('macaddr_9') and rospy.get_param('essid_9')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
             else : x = 0
 
         last_trans=[0,0]
         diff_x = round(abs(trans[0]-last_trans[0]),2)
-        diff_y = round(abs(trans[1]-last_trans[1]),2)
-        #print self.cell_width,type(self.cell_width), diff_x >= self.cell_width or diff_y >= self.cell_height
+        diff_y = round(abs(trans[1]-last_trans[1]),2)                                              
+        index_absent_aps = self.diff_aps(self.macadd_list,related_networks)
+        related_networks = sorted(related_networks, key=lambda list: list[1])
+        for x in index_absent_aps:								   #This can only be done if the macaddr is filled in ascending order in .yaml
+            essid = "essid_%d" %x									    
+            macaddr = "macaddr_%d" %x
+            related_networks.insert(x,(rospy.get_param(essid),rospy.get_param(macaddr),0))
 
-        if diff_x >= self.cell_width or diff_y >= self.cell_height :
+        if diff_x >= self.cell_width or diff_y >= self.cell_height:
             pos_x= self.rounding(trans[0],self.cell_width)
             pos_y= self.rounding(trans[1],self.cell_height)
-            self.fingerprints[pos_x,pos_y]=tuple(r_networks)
+            self.fingerprints[pos_x,pos_y]=tuple(related_networks)
             last_trans=trans
+
+    def diff_aps(self,macadd_list,related_networks):
+      index_absent_aps = []
+      seen_macadd = []
+      for ap in related_networks:
+          seen_macadd.append(ap[1])
+      s = set(seen_macadd)
+      absent_aps = [x for x in macadd_list if x not in s]
+      absent_aps = sorted(absent_aps)
+      for ap in absent_aps:
+        index_absent_aps.append(macadd_list.index(ap))
+
+      return index_absent_aps
 
     def retrieve(self):
         pos_x = float(raw_input("Position x= "))

@@ -17,14 +17,27 @@ from StringIO import StringIO
 class PosEstimate:
   def __init__(self, database):
     self.dic = pickle.load(open( database,"rb"))
+    self.macadd_list = self.get_list_of_specified_macadd(rospy.get_param('num_aps'))
     rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.survey_cb)
     self.listener = tf.TransformListener()
-    self.pub = rospy.Publisher('ddwrt/posewithcovariance', PoseWithCovarianceStamped)
+    self.pub_w_cov = rospy.Publisher('ddwrt/posewithcovariance', PoseWithCovarianceStamped)
+    self.pub_pose = rospy.Publisher('ddwrt/pose', PoseStamped)
     self.pose_cov = PoseWithCovarianceStamped()
+    self.pose     = PoseStamped()
     self.inv_fp = {}
     self.fp_keys = []
     self.l_rssi = []
     self.rssi_dict = {}
+
+  def get_list_of_specified_macadd(self,num_aps):
+    macadd_list = []
+    for dummy in range(num_aps):
+      statement = 'macaddr_%d' %dummy
+      macadd_list.append(rospy.get_param(statement))
+
+    macadd_list = sorted(macadd_list)
+    return macadd_list
+
 
   def sort_by_mac(self,u_dic,arr_pos):
     s_dic = defaultdict(list)
@@ -74,52 +87,74 @@ class PosEstimate:
 
   def survey_cb(self, survey):
 
-    r_networks = []
+    seen_networks = []
 
     for s_ap in survey.networks:
-      if (s_ap.macaddr == rospy.get_param('macaddr_1') and rospy.get_param('essid_1'))  : r_networks.append((s_ap.rssi,s_ap.macaddr))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_2') and rospy.get_param('essid_2')): r_networks.append((s_ap.rssi,s_ap.macaddr))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_3') and rospy.get_param('essid_3')): r_networks.append((s_ap.rssi,s_ap.macaddr))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_4') and rospy.get_param('essid_4')): r_networks.append((s_ap.rssi,s_ap.macaddr))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_5') and rospy.get_param('essid_5')): r_networks.append((s_ap.rssi,s_ap.macaddr))
+      if (s_ap.macaddr == rospy.get_param('macaddr_0') and rospy.get_param('essid_0'))  : seen_networks.append((s_ap.rssi,s_ap.macaddr))
+      elif (s_ap.macaddr == rospy.get_param('macaddr_1') and rospy.get_param('essid_1')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
+      elif (s_ap.macaddr == rospy.get_param('macaddr_2') and rospy.get_param('essid_2')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
+      elif (s_ap.macaddr == rospy.get_param('macaddr_3') and rospy.get_param('essid_3')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
+      elif (s_ap.macaddr == rospy.get_param('macaddr_4') and rospy.get_param('essid_4')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
+      elif (s_ap.macaddr == rospy.get_param('macaddr_5') and rospy.get_param('essid_5')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
+      elif (s_ap.macaddr == rospy.get_param('macaddr_6') and rospy.get_param('essid_6')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
+      elif (s_ap.macaddr == rospy.get_param('macaddr_7') and rospy.get_param('essid_7')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
+      elif (s_ap.macaddr == rospy.get_param('macaddr_8') and rospy.get_param('essid_8')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
+      elif (s_ap.macaddr == rospy.get_param('macaddr_9') and rospy.get_param('essid_9')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
       else : x = 0
     
-    r_rssi_list = []
-    r_networks = numpy.asarray(r_networks)
+    seen_rssi = []
+    seen_networks = numpy.asarray(seen_networks)
 
-    r_networks = tuple(sorted(r_networks, key=lambda list: list[1]))
+    seen_networks = tuple(sorted(seen_networks, key=lambda list: list[1]))
     
-    for x in range(len(r_networks)):
-      r_rssi_list.append(int(r_networks[x][0]))
+    for x in range(len(seen_networks)):
+      seen_rssi.append(int(seen_networks[x][0]))								#A list of macadd-sorted rssi (The currently seen RSSIs)
 
-    self.convert(r_rssi_list)
+    index_absent_aps = self.diff_aps(self.macadd_list,seen_rssi)
+
+    self.convert(seen_rssi,survey,index_absent_aps)
   
-  def convert(self,r_rssi_list):
+  def diff_aps(self,macadd_list,seen_rssi):
+    index_absent_aps = []
+    s = set(seen_rssi)
+    absent_aps = [x for x in macadd_list if x not in s]
+    for ap in absent_aps:
+      index_absent_aps.append(absent_aps.index(ap))
+
+    return index_absent_aps
+
+  def convert(self,seen_rssi,survey,index_absent_aps):
+    survey = survey
     dic_rssi = self.rssi_dict.keys()
     dic_rssi_arr = numpy.asarray(dic_rssi)
     facto_list = []
-    r_rssi_list = numpy.asarray(r_rssi_list)
+    seen_rssi = numpy.asarray(seen_rssi)
 
     for x in range(len(self.rssi_dict.keys())):
-      dist = numpy.linalg.norm(r_rssi_list - dic_rssi_arr[x])
+      for index in index_absent_aps:
+        dic_rssi_arr[x][index]= 0									#by setting certain rssi to 0,the keys in the dictionary will not be affected.
+      dist = numpy.linalg.norm(seen_rssi - dic_rssi_arr[x])
       a = dist
       b = self.rssi_dict[dic_rssi[x]][0]								#[0] is added due to the extra set of square brackets
       facto_list.append([a,b])
-
+    print seen_rssi
     #print "final_list:", facto_list
-    self.calculate_covariance(facto_list)
+    self.calculate_covariance(facto_list,survey)
 
-  def calculate_covariance(self, facto_list):
+
+  def calculate_covariance(self, facto_list, survey):
     s_facto_list = sorted(facto_list)
-    dummy = len(s_facto_list)/10
+    dummy = len(s_facto_list)* rospy.get_param('percentage_taken')
     
-    for x in range(dummy+1):
+    for x in range(int(dummy+1)):
       arr_pos = numpy.array(s_facto_list[x][1]).T
 
     covar_xy = numpy.cov(arr_pos)[0][1] 
     mean_xy  = arr_pos.mean(axis=1)									# [x,y]
     
     (trans, rot) = self.listener.lookupTransform('/map', '/base_link', rospy.Time(0))
+
+    self.pose_cov.header = survey.header
     self.pose_cov.pose.pose.position.x    = mean_xy[0]
     self.pose_cov.pose.pose.position.y    = mean_xy[1]
     self.pose_cov.pose.pose.position.z    = trans[2]
@@ -129,8 +164,19 @@ class PosEstimate:
     self.pose_cov.pose.pose.orientation.w = rot[3]
     self.pose_cov.pose.covariance[1]      = covar_xy
     self.pose_cov.pose.covariance[6]      = covar_xy
+
+    self.pose.header             = survey.header
+    self.pose.pose.position.x    = mean_xy[0]
+    self.pose.pose.position.y    = mean_xy[1]
+    self.pose.pose.position.x    = mean_xy[0]
+    self.pose.pose.orientation.x = rot[0]    
+    self.pose.pose.orientation.y = rot[1]
+    self.pose.pose.orientation.z = rot[2]
+    self.pose.pose.orientation.w = rot[3]
     
-    self.pub.publish(self.pose_cov)
+    self.pub_w_cov.publish(self.pose_cov)
+    self.pub_pose.publish(self.pose)
+
 
 def approximate():
   rospy.init_node('approximate', anonymous=True)

@@ -31,8 +31,8 @@ class PosEstimate:
 
   def get_list_of_specified_macadd(self,num_aps):
     macadd_list = []
-    for dummy in range(num_aps):
-      statement = 'macaddr_%d' %dummy
+    for counter in range(num_aps):
+      statement = 'macaddr_%d' %counter
       macadd_list.append(rospy.get_param(statement))
 
     macadd_list = sorted(macadd_list)

@@ -1,7 +1,7 @@
-/c_width: 1
-/c_height: 1
-/database: fingerprints.pkl
-/num_aps: 5
+/c_width: 0.1
+/c_height: 0.1
+/database: fingerprints_10ap.pkl
+/num_aps: 10
 /macaddr_0: "08:60:6e:cc:79:04"
 /essid_0: cob-developer
 /macaddr_1: "84:c9:b2:6a:80:e8"

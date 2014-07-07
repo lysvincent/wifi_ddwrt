@@ -20,22 +20,32 @@ class Fingerprints:
         self.listener = listener
         self.cell_height = cell_height
         self.cell_width = cell_width
-        print self.cell_width
         self.fingerprints = {}
         self.get_map()
         self.num_aps = rospy.get_param('num_aps')
-        self.macadd_list = self.get_list_of_specified_macadd(self.num_aps)
+        self.s_macadd_list = self.get_sorted_list_of_specified_macadd(self.num_aps)
+        self.s_essid_mac_list = self.get_sorted_essid_mac_list(self.num_aps)
         rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.survey_cb)
 
-    def get_list_of_specified_macadd(self,num_aps):
-      macadd_list = []
-      for dummy in range(num_aps):
-        statement = 'macaddr_%d' %dummy
-        macadd_list.append(rospy.get_param(statement))
+    def get_sorted_list_of_specified_macadd(self,num_aps):							#get a sorted macadd list from .yaml
+        macadd_list = []
+        for counter in range(num_aps):
+            macadd = 'macaddr_%d' %counter
+            macadd_list.append(rospy.get_param(macadd))
 
-      macadd_list = sorted(macadd_list)
-      return macadd_list
+        s_macadd_list = sorted(macadd_list)
+        return s_macadd_list
 
+    def get_sorted_essid_mac_list(self,num_aps):
+        essid_mac_list = []
+        for counter in range(num_aps):
+            macadd = 'macaddr_%d' %counter
+            essid  = 'essid_%d'   %counter
+            essid_mac_list.append((rospy.get_param(essid),(rospy.get_param(macadd))))
+
+        s_essid_mac_list = sorted(essid_mac_list, key=lambda list: list[1])
+        return s_essid_mac_list 
+        
     def get_map(self):
         rospy.wait_for_service('static_map')
         try:
@@ -59,7 +69,7 @@ class Fingerprints:
             print "Got an exception that should never happen"
             return
 
-        wanted_networks = []
+        related_networks = []
 
         for seen_ap in survey.networks:
             if (seen_ap.macaddr == rospy.get_param('macaddr_0') and rospy.get_param('essid_0'))  : related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
@@ -77,12 +87,13 @@ class Fingerprints:
         last_trans=[0,0]
         diff_x = round(abs(trans[0]-last_trans[0]),2)
         diff_y = round(abs(trans[1]-last_trans[1]),2)                                              
-        index_absent_aps = self.diff_aps(self.macadd_list,related_networks)
+
+        index_absent_aps = self.diff_aps(self.s_macadd_list,related_networks)
         related_networks = sorted(related_networks, key=lambda list: list[1])
-        for x in index_absent_aps:								   #This can only be done if the macaddr is filled in ascending order in .yaml
-            essid = "essid_%d" %x									    
-            macaddr = "macaddr_%d" %x
-            related_networks.insert(x,(rospy.get_param(essid),rospy.get_param(macaddr),0))
+
+        for x in index_absent_aps:								   
+            #The APs which are not specified but not seen are set to 0
+            related_networks.insert(x,(self.s_essid_mac_list[x][0], self.s_essid_mac_list[x][1], 0))
 
         if diff_x >= self.cell_width or diff_y >= self.cell_height:
             pos_x= self.rounding(trans[0],self.cell_width)
@@ -90,16 +101,16 @@ class Fingerprints:
             self.fingerprints[pos_x,pos_y]=tuple(related_networks)
             last_trans=trans
 
-    def diff_aps(self,macadd_list,related_networks):
+    def diff_aps(self,s_macadd_list,related_networks):
       index_absent_aps = []
       seen_macadd = []
       for ap in related_networks:
           seen_macadd.append(ap[1])
       s = set(seen_macadd)
-      absent_aps = [x for x in macadd_list if x not in s]
+      absent_aps = [x for x in s_macadd_list if x not in s]
       absent_aps = sorted(absent_aps)
       for ap in absent_aps:
-        index_absent_aps.append(macadd_list.index(ap))
+        index_absent_aps.append(s_macadd_list.index(ap))
 
       return index_absent_aps
 
@@ -149,7 +160,7 @@ def fingerPrints():
         c_width = 5
         print "Specified cell width is too large. Cell width is set to 5"
     elif c_width < 1:
-        c_width = 1
+        c_width = 0.5
         print "Specified cell width is too small. Cell width is set to 1"
     else : x = 0
 
@@ -157,7 +168,7 @@ def fingerPrints():
         c_height = 5
         print "Specified cell height is too large. Cell height is set to 5"
     elif c_height < 1:
-        c_height = 1
+        c_height = 0.5
         print "Specified cell height is too small. Cell height is set to 1"
     else : x = 0
 

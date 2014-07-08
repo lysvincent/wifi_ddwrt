@@ -18,7 +18,7 @@ class PosEstimate:
   def __init__(self, database):
     self.dic = pickle.load(open( database,"rb"))
     self.macadd_list = self.get_list_of_specified_macadd(rospy.get_param('num_aps'))
-    rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.survey_cb)
+    rospy.Subscriber('ddwrt/specified_aps', SiteSurvey, self.specified_aps_cb)
     self.listener = tf.TransformListener()
     self.pub_w_cov = rospy.Publisher('ddwrt/posewithcovariance', PoseWithCovarianceStamped)
     self.pub_pose = rospy.Publisher('ddwrt/pose', PoseStamped)
@@ -39,12 +39,12 @@ class PosEstimate:
     return macadd_list
 
 
-  def sort_by_mac(self,u_dic,arr_pos):
+  def sort_by_mac(self,u_dic):
     s_dic = defaultdict(list)
     u_dic_values = list(u_dic.values())
     counter = 0
     for key_ in u_dic.keys():
-      n_key = tuple(sorted(list(key_), key=lambda list: list[arr_pos]))
+      n_key = tuple(sorted(list(key_), key=lambda list: list[1]))
       s_dic[n_key].append(u_dic_values[counter])
       counter += 1
     
@@ -52,14 +52,13 @@ class PosEstimate:
 
   def invert_keys(self):
     inv_fp = defaultdict(list)
-    #inv_fp = {v:k for k, v in self.dic.items()}
     keys_list = self.dic.keys()
     values_list = self.dic.values()
 
     for x in range(len(self.dic.items())):
       inv_fp[values_list[x]].append(keys_list[x])
 
-    inv_fp = self.sort_by_mac(inv_fp, 1)
+    inv_fp = self.sort_by_mac(inv_fp)
     return inv_fp
   
   def get_aps_rssi_list(self,fp_keys):
@@ -67,8 +66,8 @@ class PosEstimate:
     l_rssi = []
     for fp_key in fp_keys:
       for ap in fp_key:
-        mac = ap[2]
-        l_rssi.append(mac)
+        rssi = ap[2]
+        l_rssi.append(rssi)
       rssi_set.append(l_rssi)
  
     return rssi_set
@@ -80,39 +79,21 @@ class PosEstimate:
 
     return nt_conv_dict
 
-  def take(n, iterable):
-    "Return first n items of the iterable as a list"
-    a = list(islice(iterable, n))
-    return a
-
-  def survey_cb(self, survey):
-
-    seen_networks = []
-
-    for s_ap in survey.networks:
-      if (s_ap.macaddr == rospy.get_param('macaddr_0') and rospy.get_param('essid_0'))  : seen_networks.append((s_ap.rssi,s_ap.macaddr))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_1') and rospy.get_param('essid_1')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_2') and rospy.get_param('essid_2')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_3') and rospy.get_param('essid_3')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_4') and rospy.get_param('essid_4')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_5') and rospy.get_param('essid_5')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_6') and rospy.get_param('essid_6')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_7') and rospy.get_param('essid_7')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_8') and rospy.get_param('essid_8')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
-      elif (s_ap.macaddr == rospy.get_param('macaddr_9') and rospy.get_param('essid_9')): seen_networks.append((s_ap.rssi,s_ap.macaddr))
-      else : x = 0
+  def specified_aps_cb(self, specified_aps):
+    #specified_aps has the required aps in the format of (essid,macaddr,rssi)
+    specified_aps = []
     
     seen_rssi = []
-    seen_networks = numpy.asarray(seen_networks)
+    specified_aps = numpy.asarray(specified_aps)
 
-    seen_networks = tuple(sorted(seen_networks, key=lambda list: list[1]))
-    
-    for x in range(len(seen_networks)):
-      seen_rssi.append(int(seen_networks[x][0]))								#A list of macadd-sorted rssi (The currently seen RSSIs)
+    s_specified_aps = tuple(sorted(specified_aps, key=lambda list: list[1]))
+     
+    for x in range(len(s_specified_aps)):
+      seen_rssi.append(int(s_specified_aps[x][2]))								#A list of macadd-sorted rssi (The currently seen RSSIs)
 
     index_absent_aps = self.diff_aps(self.macadd_list,seen_rssi)
 
-    self.convert(seen_rssi,survey,index_absent_aps)
+    self.convert(seen_rssi,specified_aps,index_absent_aps)
   
   def diff_aps(self,macadd_list,seen_rssi):
     index_absent_aps = []
@@ -123,8 +104,8 @@ class PosEstimate:
 
     return index_absent_aps
 
-  def convert(self,seen_rssi,survey,index_absent_aps):
-    survey = survey
+  def convert(self,seen_rssi,specified_aps,index_absent_aps):
+    specified_aps = specified_aps
     dic_rssi = self.rssi_dict.keys()
     dic_rssi_arr = numpy.asarray(dic_rssi)
     facto_list = []
@@ -139,10 +120,10 @@ class PosEstimate:
       facto_list.append([a,b])
     print seen_rssi
     #print "final_list:", facto_list
-    self.calculate_covariance(facto_list,survey)
+    self.calculate_covariance(facto_list,specified_aps)
 
 
-  def calculate_covariance(self, facto_list, survey):
+  def calculate_covariance(self, facto_list, specified_aps):
     s_facto_list = sorted(facto_list)
     dummy = len(s_facto_list)* rospy.get_param('percentage_taken')
     
@@ -154,7 +135,7 @@ class PosEstimate:
     
     (trans, rot) = self.listener.lookupTransform('/map', '/base_link', rospy.Time(0))
 
-    self.pose_cov.header = survey.header
+    self.pose_cov.header = specified_aps.header
     self.pose_cov.pose.pose.position.x    = mean_xy[0]
     self.pose_cov.pose.pose.position.y    = mean_xy[1]
     self.pose_cov.pose.pose.position.z    = trans[2]
@@ -165,7 +146,7 @@ class PosEstimate:
     self.pose_cov.pose.covariance[1]      = covar_xy
     self.pose_cov.pose.covariance[6]      = covar_xy
 
-    self.pose.header             = survey.header
+    self.pose.header             = specified_aps.header
     self.pose.pose.position.x    = mean_xy[0]
     self.pose.pose.position.y    = mean_xy[1]
     self.pose.pose.position.x    = mean_xy[0]
@@ -187,6 +168,7 @@ def approximate():
   pe.fp_values = list(pe.inv_fp.values())
   pe.l_rssi = pe.get_aps_rssi_list(pe.fp_keys)
   pe.rssi_dict = pe.match_rssi_to_pos(pe.l_rssi,pe.fp_values)
+  print "pe.rssi_dict:", pe.rssi_dict
   rospy.spin()
      
 if __name__ == '__main__':

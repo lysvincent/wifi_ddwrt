@@ -1,3 +1,11 @@
+cell size:
+    -c_width: 1
+     c_height:1
+
+database : fingerprints.pkl
+
+percentage_taken : 0.9
+
 access points:
     -ap_no  :0 
      macaddr: "08:60:6e:cc:79:04"

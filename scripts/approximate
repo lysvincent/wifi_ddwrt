@@ -15,9 +15,12 @@ from visualization_msgs.msg import *
 from StringIO import StringIO
 
 class PosEstimate:
-  def __init__(self, database):
-    self.dic = pickle.load(open( database,"rb"))
-    self.macadd_list = self.get_list_of_specified_macadd(rospy.get_param('num_aps'))
+  def __init__(self):
+    tasks_file = rospy.get_param('~ddwrt_file')
+    self.ddwrt_file = yaml.load(file(tasks_file, 'r'))
+    self.aps = self.ddwrt_file[“access points]
+    self.dic = pickle.load(open(ddwrt_file[database],"rb"))
+    self.macadd_list = self.get_list_of_specified_macadd()
     rospy.Subscriber('ddwrt/specified_aps', SiteSurvey, self.specified_aps_cb)
     self.listener = tf.TransformListener()
     self.pub_w_cov = rospy.Publisher('ddwrt/posewithcovariance', PoseWithCovarianceStamped)
@@ -29,12 +32,10 @@ class PosEstimate:
     self.l_rssi = []
     self.rssi_dict = {}
 
-  def get_list_of_specified_macadd(self,num_aps):
+  def get_list_of_specified_macadd(self):
     macadd_list = []
-    for counter in range(num_aps):
-      statement = 'macaddr_%d' %counter
-      macadd_list.append(rospy.get_param(statement))
-
+    for ap in self.aps:
+      macadd_list.append(ap[1])
     macadd_list = sorted(macadd_list)
     return macadd_list
 
@@ -125,7 +126,7 @@ class PosEstimate:
 
   def calculate_covariance(self, facto_list, specified_aps):
     s_facto_list = sorted(facto_list)
-    dummy = len(s_facto_list)* rospy.get_param('percentage_taken')
+    dummy = len(s_facto_list)* self.ddwrt_file[percentage_taken]
     
     for x in range(int(dummy+1)):
       arr_pos = numpy.array(s_facto_list[x][1]).T
@@ -161,8 +162,7 @@ class PosEstimate:
 
 def approximate():
   rospy.init_node('approximate', anonymous=True)
-  stri = rospy.get_param('database')
-  pe = PosEstimate(stri)
+  pe = PosEstimate()
   pe.inv_fp = pe.invert_keys()									   #an inverted dic.
   pe.fp_keys = list(pe.inv_fp.keys())
   pe.fp_values = list(pe.inv_fp.values())

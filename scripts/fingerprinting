@@ -13,36 +13,54 @@ from geometry_msgs.msg import *
 from nav_msgs.srv import *
 from visualization_msgs.msg import *
 from StringIO import StringIO
+import yaml
 
 class Fingerprints:
-    def __init__(self,listener,cell_height,cell_width):
-        self.aps = analysis.aps
+    def __init__(self,listener):
+        tasks_file = rospy.get_param('~ddwrt_file')
+        self.ddwrt_file = yaml.load(file(tasks_file, 'r'))
+        self.aps = self.ddwrt_file[“access points]
         self.listener = listener
-        self.cell_height = cell_height
-        self.cell_width = cell_width
+        self.cell_size = self.ddwrt_file[“cell_size]
+        self.cell_width= float(cell_size[c_width])
+        self.cell_height= float(cell_size[c_width])
+        self.check_cell_dimension()
         self.fingerprints = {}
         self.get_map()
-        self.num_aps = rospy.get_param('num_aps')
-        self.s_macadd_list = self.get_sorted_list_of_specified_macadd(self.num_aps)
-        self.s_essid_mac_list = self.get_sorted_essid_mac_list(self.num_aps)
+        self.s_macadd_list = self.get_sorted_list_of_specified_macadd()
+        self.s_essid_mac_list = self.get_sorted_essid_mac_list()
         rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.survey_cb)
+        rospy.Subscriber('ddwrt/specified_aps'), SiteSurvey, self.specAps_cb)
 
-    def get_sorted_list_of_specified_macadd(self,num_aps):							#get a sorted macadd list from .yaml
+    def check_cell_dimension(self):
+    if self.c_width > 5:
+        self.c_width = 5
+        print "Specified cell width is too large. Cell width is set to 5"
+    elif self.c_width < 1:
+        self.c_width = 1
+        print "Specified cell width is too small. Cell width is set to 1"
+    else : x = 0
+
+    if self.c_height > 5:
+        self.c_height = 5
+        print "Specified cell height is too large. Cell height is set to 5"
+    elif self.c_height < 1:
+        self.c_height = 1
+        print "Specified cell height is too small. Cell height is set to 1"
+    else : x = 0
+
+    def get_sorted_list_of_specified_macadd(self):
+	#get a sorted macadd list from .yaml
         macadd_list = []
-        for counter in range(num_aps):
-            macadd = 'macaddr_%d' %counter
-            macadd_list.append(rospy.get_param(macadd))
-
+        for ap in self.aps:
+            macadd_list.append(ap[1])
         s_macadd_list = sorted(macadd_list)
         return s_macadd_list
 
-    def get_sorted_essid_mac_list(self,num_aps):
+    def get_sorted_essid_mac_list(self):
         essid_mac_list = []
-        for counter in range(num_aps):
-            macadd = 'macaddr_%d' %counter
-            essid  = 'essid_%d'   %counter
-            essid_mac_list.append((rospy.get_param(essid),(rospy.get_param(macadd))))
-
+        for ap in self.aps:            
+            essid_mac_list.append(ap)
         s_essid_mac_list = sorted(essid_mac_list, key=lambda list: list[1])
         return s_essid_mac_list 
         
@@ -61,38 +79,23 @@ class Fingerprints:
         except rospy.ServiceException, e:
             print "The service call to get the map failed"
 
-    def survey_cb(self, survey):
+    def specAps_cb(self, spec_aps):
         #we need to get the pose of the robot at the time the survey came in
         try:
             (trans, rot) = self.listener.lookupTransform('/map', '/base_link', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException):
             print "Got an exception that should never happen"
             return
-
-        related_networks = []
-
-        for seen_ap in survey.networks:
-            if (seen_ap.macaddr == rospy.get_param('macaddr_0') and rospy.get_param('essid_0'))  : related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
-            elif (seen_ap.macaddr == rospy.get_param('macaddr_1') and rospy.get_param('essid_1')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
-            elif (seen_ap.macaddr == rospy.get_param('macaddr_2') and rospy.get_param('essid_2')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
-            elif (seen_ap.macaddr == rospy.get_param('macaddr_3') and rospy.get_param('essid_3')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
-            elif (seen_ap.macaddr == rospy.get_param('macaddr_4') and rospy.get_param('essid_4')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
-            elif (seen_ap.macaddr == rospy.get_param('macaddr_5') and rospy.get_param('essid_5')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
-            elif (seen_ap.macaddr == rospy.get_param('macaddr_6') and rospy.get_param('essid_6')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
-            elif (seen_ap.macaddr == rospy.get_param('macaddr_7') and rospy.get_param('essid_7')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
-            elif (seen_ap.macaddr == rospy.get_param('macaddr_8') and rospy.get_param('essid_8')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
-            elif (seen_ap.macaddr == rospy.get_param('macaddr_9') and rospy.get_param('essid_9')): related_networks.append((seen_ap.essid,seen_ap.macaddr,seen_ap.rssi))
-            else : x = 0
-
+        
         last_trans=[0,0]
         diff_x = round(abs(trans[0]-last_trans[0]),2)
         diff_y = round(abs(trans[1]-last_trans[1]),2)                                              
 
-        index_absent_aps = self.diff_aps(self.s_macadd_list,related_networks)
+        index_absent_aps = self.diff_aps(self.s_macadd_list,spec_aps)
         related_networks = sorted(related_networks, key=lambda list: list[1])
 
         for x in index_absent_aps:								   
-            #The APs which are not specified but not seen are set to 0
+            #The APs which are specified but not seen are set to 0
             related_networks.insert(x,(self.s_essid_mac_list[x][0], self.s_essid_mac_list[x][1], 0))
 
         if diff_x >= self.cell_width or diff_y >= self.cell_height:
@@ -102,17 +105,17 @@ class Fingerprints:
             last_trans=trans
 
     def diff_aps(self,s_macadd_list,related_networks):
-      index_absent_aps = []
-      seen_macadd = []
-      for ap in related_networks:
-          seen_macadd.append(ap[1])
-      s = set(seen_macadd)
-      absent_aps = [x for x in s_macadd_list if x not in s]
-      absent_aps = sorted(absent_aps)
-      for ap in absent_aps:
-        index_absent_aps.append(s_macadd_list.index(ap))
+        index_absent_aps = []
+        seen_macadd = []
+        for ap in related_networks:
+            seen_macadd.append(ap[1])
+        s = set(seen_macadd)
+        absent_aps = [x for x in s_macadd_list if x not in s]
+        absent_aps = sorted(absent_aps)
+        for ap in absent_aps:
+            index_absent_aps.append(s_macadd_list.index(ap))
 
-      return index_absent_aps
+        return index_absent_aps
 
     def retrieve(self):
         pos_x = float(raw_input("Position x= "))
@@ -148,30 +151,11 @@ class Fingerprints:
                 return round(pos,1)
 
     def save_fingerprints(self):
-        database = rospy.get_param('database')
-        pickle.dump(self.fingerprints, open(database ,"wb"))
+        pickle.dump(self.fingerprints, open(self.ddwrt_file[database] ,"wb"))
         
 
 def fingerPrints():
     
-    c_width= float(rospy.get_param('c_width'))
-    c_height= float(rospy.get_param('c_height'))
-    if c_width > 5:
-        c_width = 5
-        print "Specified cell width is too large. Cell width is set to 5"
-    elif c_width < 1:
-        c_width = 0.5
-        print "Specified cell width is too small. Cell width is set to 1"
-    else : x = 0
-
-    if c_height > 5:
-        c_height = 5
-        print "Specified cell height is too large. Cell height is set to 5"
-    elif c_height < 1:
-        c_height = 0.5
-        print "Specified cell height is too small. Cell height is set to 1"
-    else : x = 0
-
     rospy.init_node('fingerprinting', anonymous=True)
     listener = tf.TransformListener()
     fp = Fingerprints(listener,c_width,c_height)

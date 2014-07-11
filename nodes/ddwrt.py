@@ -58,17 +58,14 @@ class WifiAP:
     self.hostname = hostname
     self.username = username
     self.password = password
+    tasks_file = rospy.get_param('~ddwrt_file')
+    ddwrt_file = yaml.load(file(tasks_file, 'r'))
+    self.aps = ddwrt_file[“access points]
     self.aps_dict = self.getApsFromYaml()
-    tasks_file = rospy.get_param('~aps_file')
-    aps_file = yaml.load(file(tasks_file, 'r'))
-    aps = aps_file[“access points]
 
   def getApsFromYaml(self):
     aps_dict = {}
-    tasks_file = rospy.get_param('~ddwrt_file')
-    aps_file = yaml.load(file(tasks_file, 'r'))
-    aps = aps_file[“access points]
-    for ap in aps:
+    for ap in self.aps:
       aps_dict[macaddr] = 1
     return aps_dict
 
@@ -129,6 +126,7 @@ class WifiAP:
     for s_ap in survey.networks:
       if self.aps_dict.get(s_ap.macaddr, 0): r_networks.append((s_ap.essid, s_ap.macaddr, s_ap.rssi))
       else: x = 0
+    r_networḱs = sorted(r_networks, key=lambda list: list[1])
     return specified_aps
 
   def fetchBandwidthStats(self, interface):

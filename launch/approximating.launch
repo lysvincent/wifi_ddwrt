@@ -1,10 +1,15 @@
 <launch>
 
-        <rosparam command="delete" param = "/PosEstimate"/>
+        
+        <node pkg="wifi_ddwrt" name="wifi_ddwrt" type="ddwrt" output="screen">
+
+            <rosparam file="$(find wifi_ddwrt)/config/ddwrt.yaml" command="load"/>
+
+        </node>
 
         <node pkg="wifi_ddwrt" name="approximate" type="approximate" output="screen">          
             
-            <rosparam file="$(find wifi_ddwrt)/config/approximate.yaml" command="load"/>
+            <rosparam file="$(find wifi_ddwrt)/config/ddwrt.yaml" command="load"/>
         
         </node> 
 

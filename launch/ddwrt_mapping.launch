@@ -3,13 +3,13 @@
 
         <node pkg="wifi_ddwrt" name="wifi_ddwrt" type="ddwrt" output="log">
 
-            <param name="aps_file" value="$(find wifi_ddwrt)/config/mapping.yaml"/>
+            <param name="aps_file" value="$(find wifi_ddwrt)/config/ddwrt.yaml"/>
 
         </node>
 
         <node pkg="wifi_ddwrt" name="fingerprinting" type="fingerprinting" output="log">
 
-            <rosparam file="$(find wifi_ddwrt)/config/normal_setup.yaml" command="load"/>
+            <rosparam file="$(find wifi_ddwrt)/config/ddwrt.yaml" command="load"/>
 
         </node>
 

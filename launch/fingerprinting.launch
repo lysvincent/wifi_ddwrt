@@ -4,7 +4,7 @@
 
         <node pkg="wifi_ddwrt" name="fingerprinting" type="fingerprinting" output="log">          
             
-            <rosparam file="$(find wifi_ddwrt)/config/normal_setup.yaml" command="load"/>
+            <rosparam file="$(find wifi_ddwrt)/config/normal_setup.yaml" />
         
         </node> 
 

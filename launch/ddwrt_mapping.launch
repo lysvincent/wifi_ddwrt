@@ -1,15 +1,15 @@
 <launch>
 
 
-        <node pkg="wifi_ddwrt" name="wifi_ddwrt" type="ddwrt" output="log">
+        <node pkg="wifi_ddwrt" name="wifi_ddwrt" type="ddwrt.py" output="screen">
 
-            <param name="aps_file" value="$(find wifi_ddwrt)/config/ddwrt.yaml"/>
+            <param name="aps_file" value="$(find wifi_ddwrt)/config/wifi_localisation.yaml"/>
 
         </node>
 
         <node pkg="wifi_ddwrt" name="fingerprinting" type="fingerprinting" output="log">
 
-            <rosparam file="$(find wifi_ddwrt)/config/ddwrt.yaml" command="load"/>
+            <param name="ddwrt_file" value="$(find wifi_ddwrt)/config/wifi_localisation.yaml" />
 
         </node>
 

@@ -1,15 +1,9 @@
 <launch>
 
         
-        <node pkg="wifi_ddwrt" name="wifi_ddwrt" type="ddwrt" output="screen">
-
-            <rosparam file="$(find wifi_ddwrt)/config/ddwrt.yaml" command="load"/>
-
-        </node>
-
         <node pkg="wifi_ddwrt" name="approximate" type="approximate" output="screen">          
             
-            <rosparam file="$(find wifi_ddwrt)/config/ddwrt.yaml" command="load"/>
+            <param name="ddwrt_file" value="$(find wifi_ddwrt)/config/wifi_localisation.yaml" />
         
         </node> 
 

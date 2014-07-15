@@ -13,13 +13,14 @@ from geometry_msgs.msg import *
 from nav_msgs.srv import *
 from visualization_msgs.msg import *
 from StringIO import StringIO
+import yaml
 
 class PosEstimate:
   def __init__(self):
     tasks_file = rospy.get_param('~ddwrt_file')
     self.ddwrt_file = yaml.load(file(tasks_file, 'r'))
-    self.aps = self.ddwrt_file[“access points]
-    self.dic = pickle.load(open(ddwrt_file[database],"rb"))
+    self.aps = self.ddwrt_file["access points"]
+    self.dic = pickle.load(open(self.ddwrt_file["database"],"rb"))
     self.macadd_list = self.get_list_of_specified_macadd()
     rospy.Subscriber('ddwrt/specified_aps', SiteSurvey, self.specified_aps_cb)
     self.listener = tf.TransformListener()

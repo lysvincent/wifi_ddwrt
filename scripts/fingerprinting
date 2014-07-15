@@ -19,35 +19,35 @@ class Fingerprints:
     def __init__(self,listener):
         tasks_file = rospy.get_param('~ddwrt_file')
         self.ddwrt_file = yaml.load(file(tasks_file, 'r'))
-        self.aps = self.ddwrt_file[“access points]
+        self.aps = self.ddwrt_file["access points"]
         self.listener = listener
-        self.cell_size = self.ddwrt_file[“cell_size]
-        self.cell_width= float(cell_size[c_width])
-        self.cell_height= float(cell_size[c_width])
+        self.cell_size = self.ddwrt_file["cell size"]
+        self.cell_width= float(self.cell_size["c_width"])
+        self.cell_height= float(self.cell_size["c_height"])
         self.check_cell_dimension()
         self.fingerprints = {}
         self.get_map()
         self.s_macadd_list = self.get_sorted_list_of_specified_macadd()
         self.s_essid_mac_list = self.get_sorted_essid_mac_list()
         rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.survey_cb)
-        rospy.Subscriber('ddwrt/specified_aps'), SiteSurvey, self.specAps_cb)
+        rospy.Subscriber('ddwrt/specified_aps', SiteSurvey, self.specAps_cb)
 
     def check_cell_dimension(self):
-    if self.c_width > 5:
-        self.c_width = 5
-        print "Specified cell width is too large. Cell width is set to 5"
-    elif self.c_width < 1:
-        self.c_width = 1
-        print "Specified cell width is too small. Cell width is set to 1"
-    else : x = 0
+        if self.cell_width > 5:
+            self.cell_width = 5
+            print "Specified cell width is too large. Cell width is set to 5"
+        elif self.cell_width < 1:
+            self.cell_width = 1
+            print "Specified cell width is too small. Cell width is set to 1"
+        else : x = 0
 
-    if self.c_height > 5:
-        self.c_height = 5
-        print "Specified cell height is too large. Cell height is set to 5"
-    elif self.c_height < 1:
-        self.c_height = 1
-        print "Specified cell height is too small. Cell height is set to 1"
-    else : x = 0
+        if self.cell_height > 5:
+            self.cell_height = 5
+            print "Specified cell height is too large. Cell height is set to 5"
+        elif self.cell_height < 1:
+            self.cell_height = 1
+            print "Specified cell height is too small. Cell height is set to 1"
+        else : x = 0
 
     def get_sorted_list_of_specified_macadd(self):
 	#get a sorted macadd list from .yaml
@@ -158,7 +158,7 @@ def fingerPrints():
     
     rospy.init_node('fingerprinting', anonymous=True)
     listener = tf.TransformListener()
-    fp = Fingerprints(listener,c_width,c_height)
+    fp = Fingerprints(listener)
     #fp.retrieve()
     rospy.spin()
     fp.save_fingerprints()

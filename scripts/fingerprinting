@@ -29,7 +29,6 @@ class Fingerprints:
         self.get_map()
         self.s_macadd_list = self.get_sorted_list_of_specified_macadd()
         self.s_essid_mac_list = self.get_sorted_essid_mac_list()
-        rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.survey_cb)
         rospy.Subscriber('ddwrt/specified_aps', SiteSurvey, self.specAps_cb)
 
     def check_cell_dimension(self):
@@ -117,25 +116,6 @@ class Fingerprints:
 
         return index_absent_aps
 
-    def retrieve(self):
-        pos_x = float(raw_input("Position x= "))
-        pos_y = float(raw_input("Position y= "))
-        
-        while not((pos_x,pos_y) in self.fingerprints):
-            print "Position specified does not exist/available.Please specify another position."
-            print self.fingerprints.keys()
-            pos_x = float(raw_input("Position x= "))
-            if pos_x == -1000:
-                return
-            pos_y = float(raw_input("Position y= "))
-
-        pos_x = self.rounding(pos_x,self.cell_width)
-        pos_y = self.rounding(pos_y,self.cell_height)
-         
-        print self.fingerprints[pos_x,pos_y]
-
-        return self.fingerprints[pos_x,pos_y]
-
     def rounding(self, pos, factor):
         counter = 0
         hoF = float(factor)/2
@@ -151,15 +131,13 @@ class Fingerprints:
                 return round(pos,1)
 
     def save_fingerprints(self):
-        pickle.dump(self.fingerprints, open(self.ddwrt_file[database] ,"wb"))
+        pickle.dump(self.fingerprints, open(self.ddwrt_file["database"] ,"wb"))
         
-
 def fingerPrints():
     
     rospy.init_node('fingerprinting', anonymous=True)
     listener = tf.TransformListener()
     fp = Fingerprints(listener)
-    #fp.retrieve()
     rospy.spin()
     fp.save_fingerprints()
     

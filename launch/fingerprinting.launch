@@ -4,9 +4,8 @@
 
         <node pkg="wifi_ddwrt" name="fingerprinting" type="fingerprinting" output="log">          
             
-            <rosparam file="$(find wifi_ddwrt)/config/normal_setup.yaml" />
+            <param name = "ddwrt_file" value="$(find wifi_ddwrt)/config/wifi_localisation.yaml" />
         
         </node> 
 
 </launch>
-

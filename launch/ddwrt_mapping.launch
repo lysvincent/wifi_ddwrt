@@ -3,7 +3,7 @@
 
         <node pkg="wifi_ddwrt" name="wifi_ddwrt" type="ddwrt.py" output="screen">
 
-            <param name="aps_file" value="$(find wifi_ddwrt)/config/wifi_localisation.yaml"/>
+            <param name="ddwrt_file" value="$(find wifi_ddwrt)/config/wifi_localisation.yaml"/>
 
         </node>
 

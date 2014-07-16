@@ -54,19 +54,19 @@ def breakUpTrash():
         del gc.garbage[:]
 
 class WifiAP:
-  def __init__(self, hostname, username, password):
-    self.hostname = hostname
-    self.username = username
-    self.password = password
+  def __init__(self):
     tasks_file = rospy.get_param('~ddwrt_file')
     ddwrt_file = yaml.load(file(tasks_file, 'r'))
+    self.hostname = ddwrt_file["router"]["hostname"]
+    self.username = ddwrt_file["router"]["username"]
+    self.password = ddwrt_file["router"]["password"]
     self.aps = ddwrt_file["access points"]
     self.aps_dict = self.getApsFromYaml()
 
   def getApsFromYaml(self):
     aps_dict = {}
     for ap in self.aps:
-      aps_dict[macaddr] = 1
+      aps_dict[ap[1]] = 1
     return aps_dict
 
   def newBrowser(self):
@@ -127,7 +127,7 @@ class WifiAP:
       if self.aps_dict.get(s_ap.macaddr, 0): r_networks.append((s_ap.essid, s_ap.macaddr, s_ap.rssi))
       else: x = 0
     print r_networks
-    r_networḱs = sorted(r_networks, key=lambda list: list[1])
+
     return specified_aps
 
   def fetchBandwidthStats(self, interface):
@@ -213,11 +213,7 @@ class WifiAP:
 def loop():
   rospy.init_node("wifi_ddwrt")
 
-  router_ip = rospy.get_param('~router', 'wifi-router')
-  username = rospy.get_param('~username', 'root')
-  password = rospy.get_param('~password', '')
-
-  ap = WifiAP(router_ip, username, password)
+  ap = WifiAP()
 
   pub1 = rospy.Publisher("ddwrt/sitesurvey", SiteSurvey)
   pub2 = rospy.Publisher("ddwrt/accesspoint", AccessPoint)
@@ -261,28 +257,29 @@ def test():
 def usage(progname):
   print __doc__ % vars()
 
-def main(argv, stdout, environ):
-  progname = argv[0]
-  optlist, args = getopt.getopt(argv[1:], "", ["help", "test", "debug"])
+def main():
+#def main(argv, stdout, environ):
+  #progname = argv[0]
+  #optlist, args = getopt.getopt(argv[1:], "", ["help", "test", "debug"])
 
-  testflag = 0
+  #testflag = 0
 
-  for (field, val) in optlist:
-    if field == "--help":
-      usage(progname)
-      return
-    elif field == "--debug":
-      debugfull()
-    elif field == "--test":
-      testflag = 1
+  #for (field, val) in optlist:
+  #  if field == "--help":
+  #    usage(progname)
+  #    return
+  #  elif field == "--debug":
+  #    debugfull()
+  #  elif field == "--test":
+  #    testflag = 1
 
-  if testflag:
-    test()
-    return
+  #if testflag:
+  #  test()
+  #  return
   
   loop()
 
 if __name__ == "__main__":
-  main(sys.argv, sys.stdout, os.environ)
+  main()
         
 

@@ -1,6 +1,12 @@
+router :
+     hostname : "10.0.1.20"
+     username : admin
+     password : test
+
+
 cell size :
-     c_width  : 1.1
-     c_height : 1.1
+     c_width  : 0.5
+     c_height : 0.5
 
 database : fingerprints_1,1.pkl
 
@@ -26,8 +32,4 @@ access points :
      ap_no   : 4
      macaddr : "00:0b:0e:c9:38:c1"
      essid   : eduroam
-
-     ap_no   : 5
-     macaddr : "00"
-     essid   : nil
 

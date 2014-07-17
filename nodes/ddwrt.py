@@ -127,7 +127,7 @@ class WifiAP:
       if self.aps_dict.get(s_ap.macaddr, 0): r_networks.append((s_ap.essid, s_ap.macaddr, s_ap.rssi))
       else: x = 0
     print r_networks
-
+    r_networks = sorted(r_networks, key=lambda list:list[1])
     return specified_aps
 
   def fetchBandwidthStats(self, interface):

@@ -1,7 +1,7 @@
 router :
-     hostname : "10.0.1.20"
-     username : admin
-     password : test
+     hostname : "10.0.1.10"
+     username : root
+     password : admin
 
 
 cell size :

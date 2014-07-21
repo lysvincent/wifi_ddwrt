@@ -1,35 +1,35 @@
 router :
-     hostname : "10.0.1.10"
-     username : root
-     password : admin
+   hostname : "10.0.1.10"
+   username : root
+   password : admin
 
 
 cell size :
-     c_width  : 1.0
-     c_height : 1.0
+   c_width  : 1.0
+   c_height : 1.0
 
 database : fingerprints_1st_run.pkl
 
 percentage_taken : 0.9
 
 access points :
-     ap_no   : 0
-     macaddr : "08:60:6e:cc:79:00"
-     essid   : cob-developer
+  - ap_no   : "0"
+    macaddr : "08:60:6e:cc:79:00"
+    essid   : cob-developer
 
-     ap_no   : 1
-     macaddr : "00:18:e7:8a:60:6b"
-     essid   : cob3-3-extern
+  - ap_no   : "1"
+    macaddr : "00:18:e7:8a:60:6b"
+    essid   : cob3-3-extern
 
-     ap_no   : 2
-     macaddr : "84:c9:b2:6a:81:30"
-     essid   : desire-extern
+  - ap_no   : "2"
+    macaddr : "84:c9:b2:6a:81:30"
+    essid   : desire-extern
 
-     ap_no   : 3
-     macaddr : "4c:96:14:29:82:42"
-     essid   : IZS-Campus
+  - ap_no   : "3"
+    macaddr : "4c:96:14:29:82:42"
+    essid   : IZS-Campus
 
-     ap_no   : 4
-     macaddr : "4c:96:14:29:52:40"
-     essid   : eduroam
+  - ap_no   : "4"
+    macaddr : "4c:96:14:29:52:40"
+    essid   : eduroam
 

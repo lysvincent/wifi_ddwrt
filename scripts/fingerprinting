@@ -29,7 +29,7 @@ class Fingerprints:
         self.get_map()
         self.s_macadd_list = self.get_sorted_list_of_specified_macadd()
         self.s_essid_mac_list = self.get_sorted_essid_mac_list()
-        rospy.Subscriber('ddwrt/specified_aps', SiteSurvey, self.specAps_cb)
+        rospy.Subscriber('ddwrt/specified_aps', CellAp, self.specAps_cb)
 
     def check_cell_dimension(self):
         if self.cell_width > 5:
@@ -52,7 +52,7 @@ class Fingerprints:
 	#get a sorted macadd list from .yaml
         macadd_list = []
         for ap in self.aps:
-            macadd_list.append(ap[1])
+            macadd_list.append(ap["macaddr"])
         s_macadd_list = sorted(macadd_list)
         return s_macadd_list
 
@@ -60,6 +60,7 @@ class Fingerprints:
         essid_mac_list = []
         for ap in self.aps:            
             essid_mac_list.append(ap)
+        print essid_mac_list
         s_essid_mac_list = sorted(essid_mac_list, key=lambda list: list[1])
         return s_essid_mac_list 
         
@@ -79,7 +80,7 @@ class Fingerprints:
             print "The service call to get the map failed"
 
     def specAps_cb(self, spec_aps):
-        #we need to get the pose of the robot at the time the survey came in
+        #we need to get the pose of the robot at the time the spec_aps came in
         try:
             (trans, rot) = self.listener.lookupTransform('/map', '/base_link', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException):

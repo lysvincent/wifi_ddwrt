@@ -218,7 +218,7 @@ def loop():
 
   pub1 = rospy.Publisher("ddwrt/sitesurvey", SiteSurvey)
   pub2 = rospy.Publisher("ddwrt/accesspoint", AccessPoint)
-  pub3 = rospy.Publisher("ddwrt/specified_aps", CellAp)
+  pub3 = rospy.Publisher("ddwrt/seen_specified_aps", CellAp)
    
   r = rospy.Rate(.5)
   lastTime = 0

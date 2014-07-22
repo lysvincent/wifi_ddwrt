@@ -29,7 +29,7 @@ class Fingerprints:
         self.get_map()
         self.s_macadd_list = self.get_sorted_list_of_specified_macadd()
         self.s_essid_mac_list = self.get_sorted_essid_mac_list()
-        rospy.Subscriber('ddwrt/specified_aps', CellAp, self.specAps_cb)
+        rospy.Subscriber('ddwrt/seen_specified_aps', CellAp, self.specAps_cb)
 
     def check_cell_dimension(self):
         if self.cell_width > 5:
@@ -96,7 +96,8 @@ class Fingerprints:
 
         for x in index_absent_aps:
             #The APs which are specified but not seen are set to 0
-            cellap.aps.insert(x,(self.s_essid_mac_list[x][0], self.s_essid_mac_list[x][1], 0))
+            cellsig = CellSig(self.s_essid_mac_list[x][0], self.s_essid_mac_list[x][1],0)
+            cellap.aps.insert(x, cellsig)
 
         if diff_x >= self.cell_width or diff_y >= self.cell_height:
             pos_x= self.rounding(trans[0],self.cell_width)

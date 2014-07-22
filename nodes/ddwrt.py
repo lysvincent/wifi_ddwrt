@@ -125,13 +125,10 @@ class WifiAP:
     specified_aps = CellAp(header, r_networks)
     for s_ap in survey.networks:
       if self.aps_dict.get(s_ap.macaddr, 0):
-        cellsig = CellSig(s_ap.essid, s_ap.macaddr, s_ap.rssi)
+        cellsig = CellSig(s_ap.macaddr, s_ap.essid, s_ap.rssi)
         r_networks.append(cellsig)
       else: x = 0
-    def getKey(cellsig):
-      return cellsig.macaddr
-    r_networks = sorted(r_networks, key=getKey)
-    print specified_aps
+    specified_aps.aps = sorted(r_networks, key=lambda CellSig:CellSig.macaddr)
     return specified_aps
 
   def fetchBandwidthStats(self, interface):

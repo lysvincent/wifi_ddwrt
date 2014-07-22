@@ -8,7 +8,7 @@ cell size :
    c_width  : 1.0
    c_height : 1.0
 
-database : fingerprints_1st_run.pkl
+database : fingerprints_1st_run_test_1,0.pkl
 
 percentage_taken : 0.9
 

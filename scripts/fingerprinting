@@ -59,9 +59,9 @@ class Fingerprints:
     def get_sorted_essid_mac_list(self):
         essid_mac_list = []
         for ap in self.aps:            
-            essid_mac_list.append(ap)
+            essid_mac_list.append((ap["macaddr"],ap["essid"]))
         print essid_mac_list
-        s_essid_mac_list = sorted(essid_mac_list, key=lambda list: list[1])
+        s_essid_mac_list = sorted(essid_mac_list)
         return s_essid_mac_list 
         
     def get_map(self):
@@ -79,8 +79,9 @@ class Fingerprints:
         except rospy.ServiceException, e:
             print "The service call to get the map failed"
 
-    def specAps_cb(self, spec_aps):
-        #we need to get the pose of the robot at the time the spec_aps came in
+    def specAps_cb(self, cellap):
+        #we need to get the pose of the robot at the time the cellap came in
+        #incoming aps are macaddr-sorted
         try:
             (trans, rot) = self.listener.lookupTransform('/map', '/base_link', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException):
@@ -90,25 +91,24 @@ class Fingerprints:
         last_trans=[0,0]
         diff_x = round(abs(trans[0]-last_trans[0]),2)
         diff_y = round(abs(trans[1]-last_trans[1]),2)                                              
+        #get index of absent aps
+        index_absent_aps = self.diff_aps(self.s_macadd_list,cellap.aps)
 
-        index_absent_aps = self.diff_aps(self.s_macadd_list,spec_aps)
-        related_networks = sorted(related_networks, key=lambda list: list[1])
-
-        for x in index_absent_aps:								   
+        for x in index_absent_aps:
             #The APs which are specified but not seen are set to 0
-            related_networks.insert(x,(self.s_essid_mac_list[x][0], self.s_essid_mac_list[x][1], 0))
+            cellap.aps.insert(x,(self.s_essid_mac_list[x][0], self.s_essid_mac_list[x][1], 0))
 
         if diff_x >= self.cell_width or diff_y >= self.cell_height:
             pos_x= self.rounding(trans[0],self.cell_width)
             pos_y= self.rounding(trans[1],self.cell_height)
-            self.fingerprints[pos_x,pos_y]=tuple(related_networks)
+            self.fingerprints[pos_x,pos_y]=tuple(cellap.aps)
             last_trans=trans
 
     def diff_aps(self,s_macadd_list,related_networks):
         index_absent_aps = []
         seen_macadd = []
         for ap in related_networks:
-            seen_macadd.append(ap[1])
+            seen_macadd.append(ap.macaddr)
         s = set(seen_macadd)
         absent_aps = [x for x in s_macadd_list if x not in s]
         absent_aps = sorted(absent_aps)

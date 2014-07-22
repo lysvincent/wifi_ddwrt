@@ -22,7 +22,7 @@ class PosEstimate:
     self.aps = self.ddwrt_file["access points"]
     self.dic = pickle.load(open(self.ddwrt_file["database"],"rb"))
     self.macadd_list = self.get_list_of_specified_macadd()
-    rospy.Subscriber('ddwrt/specified_aps', SiteSurvey, self.specified_aps_cb)
+    rospy.Subscriber('ddwrt/specified_aps', CellAp, self.specified_aps_cb)
     self.listener = tf.TransformListener()
     self.pub_w_cov = rospy.Publisher('ddwrt/posewithcovariance', PoseWithCovarianceStamped)
     self.pub_pose = rospy.Publisher('ddwrt/pose', PoseStamped)
@@ -36,7 +36,7 @@ class PosEstimate:
   def get_list_of_specified_macadd(self):
     macadd_list = []
     for ap in self.aps:
-      macadd_list.append(ap[1])
+      macadd_list.append(ap["macaddr"])
     macadd_list = sorted(macadd_list)
     return macadd_list
 
@@ -53,6 +53,7 @@ class PosEstimate:
     return s_dic
 
   def invert_keys(self):
+    #1
     inv_fp = defaultdict(list)
     keys_list = self.dic.keys()
     values_list = self.dic.values()

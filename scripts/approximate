@@ -164,8 +164,6 @@ class PosEstimate:
     self.pose.pose.orientation.y = rot[1]
     self.pose.pose.orientation.z = rot[2]
     self.pose.pose.orientation.w = rot[3]
-
-    tf_pose.setOrigin(tf::Vector3(pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z))
     
     self.pub_w_cov.publish(self.pose_cov)
     self.pub_pose.publish(self.pose)

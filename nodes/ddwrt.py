@@ -56,17 +56,17 @@ def breakUpTrash():
 class WifiAP:
   def __init__(self):
     tasks_file = rospy.get_param('~ddwrt_file')
-    ddwrt_file = yaml.load(file(tasks_file, 'r'))
-    self.hostname = ddwrt_file["router"]["hostname"]
-    self.username = ddwrt_file["router"]["username"]
-    self.password = ddwrt_file["router"]["password"]
-    self.aps = ddwrt_file["access points"]
+    self.ddwrt_file = yaml.load(file(tasks_file, 'r'))
+    self.hostname = self.ddwrt_file["router"]["hostname"]
+    self.username = self.ddwrt_file["router"]["username"]
+    self.password = self.ddwrt_file["router"]["password"]
+    self.aps = self.ddwrt_file["access points"]
     self.aps_dict = self.getApsFromYaml()
 
   def getApsFromYaml(self):
     aps_dict = {}
     for ap in self.aps:
-      aps_dict[ap[1]] = 1
+      aps_dict[ap["macaddr"]] = 1
     return aps_dict
 
   def newBrowser(self):
@@ -122,12 +122,13 @@ class WifiAP:
     header = Header()
     header.stamp = rospy.Time.now()
     r_networks = []
-    specified_aps = SiteSurvey(header, r_networks)
+    specified_aps = CellAp(header, r_networks)
     for s_ap in survey.networks:
-      if self.aps_dict.get(s_ap.macaddr, 0): r_networks.append((s_ap.essid, s_ap.macaddr, s_ap.rssi))
+      if self.aps_dict.get(s_ap.macaddr, 0):
+        cellsig = CellSig(s_ap.macaddr, s_ap.essid, s_ap.rssi)
+        r_networks.append(cellsig)
       else: x = 0
-    print r_networks
-    r_networks = sorted(r_networks, key=lambda list:list[1])
+    specified_aps.aps = sorted(r_networks, key=lambda CellSig:CellSig.macaddr)
     return specified_aps
 
   def fetchBandwidthStats(self, interface):
@@ -217,7 +218,7 @@ def loop():
 
   pub1 = rospy.Publisher("ddwrt/sitesurvey", SiteSurvey)
   pub2 = rospy.Publisher("ddwrt/accesspoint", AccessPoint)
-  pub3 = rospy.Publisher("ddwrt/specified_aps", SiteSurvey)
+  pub3 = rospy.Publisher("ddwrt/seen_specified_aps", CellAp)
    
   r = rospy.Rate(.5)
   lastTime = 0

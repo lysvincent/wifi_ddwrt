@@ -115,13 +115,15 @@ class PosEstimate:
     dic_rssi_arr = numpy.asarray(dic_rssi)
     facto_list = []
 
-    for index in index_absent_aps:    
+    for index in index_absent_aps:
+      #setting the absent ap rssi to 0    
       seen_rssi.insert(index, 0)
     seen_rssi = numpy.array(seen_rssi)
+    print seen_rssi
     for x in range(len(self.rssi_dict.keys())):
       for index in index_absent_aps:
         dic_rssi_arr[x][index]= 0									#by setting certain rssi to 0,the keys in the dictionary will not be affected.
-      print seen_rssi
+
       print dic_rssi_arr[x]
       dist = numpy.linalg.norm(seen_rssi - dic_rssi_arr[x])
       a = dist
@@ -157,25 +159,25 @@ class PosEstimate:
     self.pose.header             = self.cellap.header
     self.pose.pose.position.x    = mean_xy[0]
     self.pose.pose.position.y    = mean_xy[1]
-    self.pose.pose.position.x    = mean_xy[0]
+    self.pose.pose.position.z    = trans[2]
     self.pose.pose.orientation.x = rot[0]    
     self.pose.pose.orientation.y = rot[1]
     self.pose.pose.orientation.z = rot[2]
     self.pose.pose.orientation.w = rot[3]
+
+    tf_pose.setOrigin(tf::Vector3(pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z))
     
     self.pub_w_cov.publish(self.pose_cov)
     self.pub_pose.publish(self.pose)
 
-
 def approximate():
   rospy.init_node('approximate', anonymous=True)
   pe = PosEstimate()
-  pe.inv_fp = pe.invert_keys()									   #an inverted dic.
-  pe.fp_keys = list(pe.inv_fp.keys())
+  pe.inv_fp = pe.invert_keys()									        #an inverted dic.
+  pe.fp_keys = list(pe.inv_fp.keys())                                                           
   pe.fp_values = list(pe.inv_fp.values())
   pe.l_rssi = pe.get_aps_rssi_list(pe.fp_keys)
   pe.rssi_dict = pe.match_rssi_to_pos(pe.l_rssi,pe.fp_values)
-  #print "pe.rssi_dict:", pe.rssi_dict
   rospy.spin()
      
 if __name__ == '__main__':

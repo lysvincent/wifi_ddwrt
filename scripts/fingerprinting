@@ -26,11 +26,14 @@ class Fingerprints:
         self.cell_height= float(self.cell_size["c_height"])
         self.check_cell_dimension()
         self.fingerprints = {}
+        self.survey_list = []
         self.get_map()
         self.s_macadd_list = self.get_sorted_list_of_specified_macadd()
         self.s_essid_mac_list = self.get_sorted_essid_mac_list()
         rospy.Subscriber('ddwrt/seen_specified_aps', CellAp, self.specAps_cb)
-
+        rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.self.sitesurvey_cb)
+        self.s = rospy.Service('save_list_of_surveyed_aps', SaveList,handle_savelist)
+        
     def check_cell_dimension(self):
         if self.cell_width > 5:
             self.cell_width = 5
@@ -134,7 +137,23 @@ class Fingerprints:
 
     def save_fingerprints(self):
         pickle.dump(self.fingerprints, open(self.ddwrt_file["database"] ,"wb"))
+
+    def sitesurvey_cb(self, sitesurvey):
+        dic = {}
+        for ap in sitesurvey.networks:
+            dic['macaddr'] = ap.macaddr
+            dic['essid']   = ap.essid
+            if not dic in self.survey_list:
+                self.survey_list.append(dic)
+            else : x = 0    
+
         
+    def handle_savelist(self, req):
+        name = self.ddwrt_file["list_sitesurvey.yaml"]
+        yaml.dump(self.survey_list, file(name,'w'))
+        print "list_sitesurvey saved"
+
+
 def fingerPrints():
     
     rospy.init_node('fingerprinting', anonymous=True)

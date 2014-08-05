@@ -19,7 +19,7 @@ class PosEstimate:
   def __init__(self):
     tasks_file = rospy.get_param('~ddwrt_file')
     self.ddwrt_file = yaml.load(file(tasks_file, 'r'))
-    self.aps = self.ddwrt_file["access points"]
+    self.aps = self.ddwrt_file["access_points"]
     self.dic = pickle.load(open(self.ddwrt_file["database"],"rb"))
     self.wanted_macadd_list = self.get_list_of_specified_macadd()
     rospy.Subscriber('ddwrt/seen_specified_aps', CellAp, self.seen_specified_aps_cb)

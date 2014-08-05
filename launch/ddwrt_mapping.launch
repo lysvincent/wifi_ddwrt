@@ -7,7 +7,7 @@
 
         </node>
 
-        <node pkg="wifi_ddwrt" name="fingerprinting" type="fingerprinting" output="log">
+        <node pkg="wifi_ddwrt" name="fingerprinting" type="fingerprinting" output="screen">
 
             <param name="ddwrt_file" value="$(find wifi_ddwrt)/config/wifi_localisation.yaml" />
 

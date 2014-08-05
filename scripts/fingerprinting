@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+
 import sys,string
 import rospy
 import roslaunch
@@ -14,14 +15,16 @@ from nav_msgs.srv import *
 from visualization_msgs.msg import *
 from StringIO import StringIO
 import yaml
+from wifi_ddwrt.srv import *
+
 
 class Fingerprints:
     def __init__(self,listener):
         tasks_file = rospy.get_param('~ddwrt_file')
         self.ddwrt_file = yaml.load(file(tasks_file, 'r'))
-        self.aps = self.ddwrt_file["access points"]
+        self.aps = self.ddwrt_file["access_points"]
         self.listener = listener
-        self.cell_size = self.ddwrt_file["cell size"]
+        self.cell_size = self.ddwrt_file["cell_size"]
         self.cell_width= float(self.cell_size["c_width"])
         self.cell_height= float(self.cell_size["c_height"])
         self.check_cell_dimension()
@@ -31,8 +34,8 @@ class Fingerprints:
         self.s_macadd_list = self.get_sorted_list_of_specified_macadd()
         self.s_essid_mac_list = self.get_sorted_essid_mac_list()
         rospy.Subscriber('ddwrt/seen_specified_aps', CellAp, self.specAps_cb)
-        rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.self.sitesurvey_cb)
-        self.s = rospy.Service('save_list_of_surveyed_aps', SaveList,handle_savelist)
+        rospy.Subscriber('ddwrt/sitesurvey', SiteSurvey, self.sitesurvey_cb)
+        self.s = rospy.Service('save_list_of_surveyed_aps',SaveList,self.handle_savelist)
         
     def check_cell_dimension(self):
         if self.cell_width > 5:
@@ -63,7 +66,6 @@ class Fingerprints:
         essid_mac_list = []
         for ap in self.aps:            
             essid_mac_list.append((ap["macaddr"],ap["essid"]))
-        print essid_mac_list
         s_essid_mac_list = sorted(essid_mac_list)
         return s_essid_mac_list 
         
@@ -139,20 +141,17 @@ class Fingerprints:
         pickle.dump(self.fingerprints, open(self.ddwrt_file["database"] ,"wb"))
 
     def sitesurvey_cb(self, sitesurvey):
-        dic = {}
         for ap in sitesurvey.networks:
+            dic = {}
             dic['macaddr'] = ap.macaddr
             dic['essid']   = ap.essid
-            if not dic in self.survey_list:
+            if not any(d['macaddr'] == dic['macaddr'] for d in self.survey_list):
                 self.survey_list.append(dic)
-            else : x = 0    
 
-        
     def handle_savelist(self, req):
-        name = self.ddwrt_file["list_sitesurvey.yaml"]
-        yaml.dump(self.survey_list, file(name,'w'))
+        name = self.ddwrt_file["list_survey"]
+        yaml.dump(self.survey_list,file(name,'w'),default_flow_style = False)
         print "list_sitesurvey saved"
-
 
 def fingerPrints():
     

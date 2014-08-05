@@ -60,7 +60,7 @@ class WifiAP:
     self.hostname = self.ddwrt_file["router"]["hostname"]
     self.username = self.ddwrt_file["router"]["username"]
     self.password = self.ddwrt_file["router"]["password"]
-    self.aps = self.ddwrt_file["access points"]
+    self.aps = self.ddwrt_file["access_points"]
     self.aps_dict = self.getApsFromYaml()
 
   def getApsFromYaml(self):
@@ -259,25 +259,7 @@ def usage(progname):
   print __doc__ % vars()
 
 def main():
-#def main(argv, stdout, environ):
-  #progname = argv[0]
-  #optlist, args = getopt.getopt(argv[1:], "", ["help", "test", "debug"])
 
-  #testflag = 0
-
-  #for (field, val) in optlist:
-  #  if field == "--help":
-  #    usage(progname)
-  #    return
-  #  elif field == "--debug":
-  #    debugfull()
-  #  elif field == "--test":
-  #    testflag = 1
-
-  #if testflag:
-  #  test()
-  #  return
-  
   loop()
 
 if __name__ == "__main__":

@@ -13,6 +13,10 @@ add_message_files(
   CellAp.msg
 )
 
+add_service_files(
+  FILES
+  SaveList.srv
+)
 generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(CATKIN_DEPENDS std_msgs)
@@ -20,10 +24,6 @@ catkin_package(CATKIN_DEPENDS std_msgs)
 install(PROGRAMS 
    nodes/ddwrt.py
    scripts/analysis.py
-   scripts/ddwrt_sim.py
-   scripts/monitor
-   scripts/ddwrt_config.py
-   scripts/wanip.py
    scripts/fingerprinting
    scripts/approximate
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

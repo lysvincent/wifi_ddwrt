@@ -7,7 +7,7 @@
 
         </node>
 
-        <node pkg="wifi_ddwrt" name="approximate" type="approximate" output="screen">
+        <node pkg="wifi_ddwrt" name="approximate" type="approximate" output="log">
 
             <param name="ddwrt_file" value="$(find wifi_ddwrt)/config/wifi_localisation.yaml"/>
 

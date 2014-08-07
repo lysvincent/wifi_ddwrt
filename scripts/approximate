@@ -14,6 +14,7 @@ from nav_msgs.srv import *
 from visualization_msgs.msg import *
 from StringIO import StringIO
 import yaml
+from wifi_ddwrt.srv import *
 
 class PosEstimate:
   def __init__(self):
@@ -26,18 +27,20 @@ class PosEstimate:
     self.listener = tf.TransformListener()
     self.pub_w_cov = rospy.Publisher('ddwrt/posewithcovariance', PoseWithCovarianceStamped)
     self.pub_pose = rospy.Publisher('ddwrt/pose', PoseStamped)
-    self.pub_w_cov_to_initialpose = rospy.Publisher('initialpose', PoseWithCovarianceStamped)
-    self.s = rospy.Service('set_initialpose',SetInitialPose, handle_setinitialpose)
+    self.pub_w_cov_to_initialpose = rospy.Publisher('initialpose', PoseWithCovarianceStamped,latch=True)
+    self.s = rospy.Service('wifi_ddwrt/setInitPose',SetInitPose, self.handle_setinitpose)
     self.pose_cov = PoseWithCovarianceStamped()
+    self.last_pose_cov = PoseWithCovarianceStamped()
     self.pose     = PoseStamped()
     self.inv_fp = {}
     self.fp_keys = []
     self.l_rssi = []
     self.rssi_dict = {}
 
-  def handle_setinitialpose(self, req):
-    if not self.pose_cov = 0:
-      self.pub_w_cov_to_initialpose.publish(self.pose.cov)
+  def handle_setinitpose(self, req):
+    if not self.pose_cov == self.last_pose_cov:
+      self.pub_w_cov_to_initialpose.publish(self.pose_cov)
+    self.last_pose_cov = self.pose_cov
 
   def get_list_of_specified_macadd(self):
     wanted_macadd_list = []
@@ -142,13 +145,16 @@ class PosEstimate:
   def calculate_covariance(self, facto_list, seen_specified_aps):
     s_facto_list = sorted(facto_list)
     dummy = len(s_facto_list)* self.ddwrt_file["percentage_taken"]
-    print s_facto_list
     for x in range(int(dummy+1)):
-      arr_pos = numpy.array(s_facto_list[x][1]).T
+      if x == 0:
+        arr_pos = numpy.array(s_facto_list[x][1])
+      else:
+        arr_pos = numpy.vstack([arr_pos,numpy.array(s_facto_list[x][1])])
 
-    covar_xy = numpy.cov(arr_pos)[0][1] 
+    arr_pos = arr_pos.T
+    covar_xy = numpy.cov(arr_pos)[0][1]
     mean_xy  = arr_pos.mean(axis=1)									# [x,y]
-    
+
     (trans, rot) = self.listener.lookupTransform('/map', '/base_link', rospy.Time(0))
 
     self.pose_cov.header = self.cellap.header

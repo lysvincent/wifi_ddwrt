@@ -16,6 +16,7 @@ add_message_files(
 add_service_files(
   FILES
   SaveList.srv
+  SetInitPose.srv
 )
 generate_messages(DEPENDENCIES std_msgs)
 

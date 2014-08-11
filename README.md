@@ -14,7 +14,7 @@ The ddwrt_mapping can be ros-launched regardless of the position of the user in 
 The .yaml file,which is created by a service in the fingerprinting node, that contains details regarding the detected access points, is also saved in the ros hidden file(.ros/). 
 
 Conclusion.
-**Both wifi_ddwrt node is needed in both the mapping and localization process.**
+**wifi_ddwrt node is needed in both the mapping and localization process.**
 **ddwrt_fingerprinting needs to be launched where the fingerprint-map is stored**
 
 Node: wifi_ddwrt

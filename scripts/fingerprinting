@@ -5,7 +5,6 @@ import sys,string
 import rospy
 import roslaunch
 from wifi_ddwrt.msg import *
-import analysis
 import math
 import tf
 import pickle
@@ -151,7 +150,8 @@ class Fingerprints:
     def handle_savelist(self, req):
         name = self.ddwrt_file["list_survey"]
         yaml.dump(self.survey_list,file(name,'w'),default_flow_style = False)
-        print "list_sitesurvey saved"
+        b = "list_sitesurvey saved"
+        return b
 
 def fingerPrints():
     

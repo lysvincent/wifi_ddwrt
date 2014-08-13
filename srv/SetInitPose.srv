@@ -1,5 +1,5 @@
-std_msgs/Empty a
+std_msgs/Empty
 
 ---
 
-
+string b

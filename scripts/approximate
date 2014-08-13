@@ -30,11 +30,13 @@ class PosEstimate:
     self.pub_w_cov_to_initialpose = rospy.Publisher('initialpose', PoseWithCovarianceStamped,latch=True)
     self.s = rospy.Service('wifi_ddwrt/setInitPose',SetInitPose, self.handle_setinitpose)
     self.pose_cov = PoseWithCovarianceStamped()
-    #initialising posewithcovariancestamped
-    self.pose_cov.pose.pose.orientation.w = 1.0
-
     self.last_pose_cov = PoseWithCovarianceStamped()
     self.pose     = PoseStamped()
+    #initialising posewithcovariancestamped & posestamped
+    self.pose_cov.pose.pose.orientation.w = 1.0
+    self.last_pose_cov.pose.pose.orientation.w = 1.0
+    self.pose.pose.orientation.w = 1.0
+
     self.inv_fp = {}
     self.fp_keys = []
     self.l_rssi = []

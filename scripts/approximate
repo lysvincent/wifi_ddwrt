@@ -165,17 +165,18 @@ class PosEstimate:
     (trans, rot) = self.listener.lookupTransform('/map', '/base_link', rospy.Time(0))
 
     self.pose_cov.header = self.cellap.header
-    self.pose_cov.header.frame_id = 'map'
-    self.pose_cov.pose.pose.position.x    = mean_xy[0]
-    self.pose_cov.pose.pose.position.y    = mean_xy[1]
-    self.pose_cov.pose.pose.position.z    = trans[2]
-    self.pose_cov.pose.pose.orientation.x = rot[0]
-    self.pose_cov.pose.pose.orientation.y = rot[1]
-    self.pose_cov.pose.pose.orientation.z = rot[2]
-    self.pose_cov.pose.pose.orientation.w = rot[3]
-    self.pose_cov.pose.covariance[1]      = covar_xy
-    self.pose_cov.pose.covariance[6]      = covar_xy
-    print "covar:", covar_xy
+    self.pose_cov.header.frame_id = '/map'
+    self.pose_cov.pose.pose.position.x    = float(round(mean_xy[0],5))
+    self.pose_cov.pose.pose.position.y    = float(mean_xy[1])
+    self.pose_cov.pose.pose.position.z    = float(trans[2])
+    self.pose_cov.pose.pose.orientation.x = float(rot[0])
+    self.pose_cov.pose.pose.orientation.y = float(rot[1])
+    self.pose_cov.pose.pose.orientation.z = float(rot[2])
+    self.pose_cov.pose.pose.orientation.w = float(rot[3])
+    self.pose_cov.pose.covariance[1]      = float(covar_xy)
+    self.pose_cov.pose.covariance[6]      = float(covar_xy)
+    #print type(mean_xy[0]),type(mean_xy[1]),type(rot[2]),type(rot[3]),type(covar_xy),
+
 
     self.pose.header             = self.cellap.header
     self.pose.pose.position.x    = mean_xy[0]

@@ -1,0 +1,16 @@
+<launch>
+
+
+        <node pkg="wifi_ddwrt" name="wifi_ddwrt" type="ddwrt.py" output="log">
+
+            <param name="ddwrt_file" value="$(find wifi_ddwrt)/config/wifi_localisation.yaml"/>
+
+        </node>
+
+        <node pkg="wifi_ddwrt" name="approximate" type="approximate" output="screen">
+
+            <param name="ddwrt_file" value="$(find wifi_ddwrt)/config/wifi_localisation.yaml"/>
+
+        </node>
+
+</launch>

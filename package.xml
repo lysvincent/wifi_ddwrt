@@ -18,13 +18,14 @@
   <run_depend>message_runtime</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>tf</run_depend>
-
+  <run_depend>pickle</run_depend>
+  <run_depend>scipy</run_depend>>
+  <run_depend>collections</run_depend>>
   <run_depend>std_msgs</run_depend>>
   <run_depend>pr2_msgs</run_depend>
   <run_depend>nav_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>visualization_msgs</run_depend>
-
   <run_depend>python-mechanize</run_depend>
 
 </package>

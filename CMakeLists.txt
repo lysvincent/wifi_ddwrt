@@ -8,17 +8,31 @@ add_message_files(
   FILES
   Network.msg
   SiteSurvey.msg
+  AccessPoint.msg
+  CellSig.msg
+  CellAp.msg
 )
 
+add_service_files(
+  FILES
+  SaveList.srv
+  SetInitPose.srv
+)
 generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(CATKIN_DEPENDS std_msgs)
 
 install(PROGRAMS 
    nodes/ddwrt.py
-   scripts/analysis
-   scripts/ddwrt_sim.py
-   scripts/monitor
-   scripts/ddwrt_config.py
-   scripts/wanip.py
+   scripts/analysis.py
+   scripts/fingerprinting
+   scripts/approximate
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+install(DIRECTORY   
+   launch/
+   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+install(DIRECTORY   
+   config
+   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})

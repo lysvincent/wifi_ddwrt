@@ -35,10 +35,10 @@
 
 import os, sys, string, time, getopt, re
 import StringIO
+import yaml
 
 import rospy
 from wifi_ddwrt.msg import *
-from pr2_msgs.msg import AccessPoint
 
 from mechanize import Browser
 from std_msgs.msg import Header
@@ -54,10 +54,20 @@ def breakUpTrash():
         del gc.garbage[:]
 
 class WifiAP:
-  def __init__(self, hostname, username, password):
-    self.hostname = hostname
-    self.username = username
-    self.password = password
+  def __init__(self):
+    tasks_file = rospy.get_param('~ddwrt_file')
+    self.ddwrt_file = yaml.load(file(tasks_file, 'r'))
+    self.hostname = self.ddwrt_file["router"]["hostname"]
+    self.username = self.ddwrt_file["router"]["username"]
+    self.password = self.ddwrt_file["router"]["password"]
+    self.aps = self.ddwrt_file["access_points"]
+    self.aps_dict = self.getApsFromYaml()
+
+  def getApsFromYaml(self):
+    aps_dict = {}
+    for ap in self.aps:
+      aps_dict[ap["macaddr"]] = 1
+    return aps_dict
 
   def newBrowser(self):
     # Create new browsers all the time because its data structures grow
@@ -98,15 +108,28 @@ class WifiAP:
     reader = csv.reader(fp)
     for row in reader:
       essid = row[0]
-      macattr = row[2]
+      macaddr = row[2]
       channel = int(row[3])
       rssi = int(row[4])
       noise = int(row[5])
       beacon = int(row[6])
 
-      network = Network(macattr, essid, channel, rssi, noise, beacon)
+      network = Network(macaddr, essid, channel, rssi, noise, beacon)
       survey.networks.append(network)
     return survey
+
+  def fetchSpecAps(self, survey):
+    header = Header()
+    header.stamp = rospy.Time.now()
+    r_networks = []
+    specified_aps = CellAp(header, r_networks)
+    for s_ap in survey.networks:
+      if self.aps_dict.get(s_ap.macaddr, 0):
+        cellsig = CellSig(s_ap.macaddr, s_ap.essid, s_ap.rssi)
+        r_networks.append(cellsig)
+      else: x = 0
+    specified_aps.aps = sorted(r_networks, key=lambda CellSig:CellSig.macaddr)
+    return specified_aps
 
   def fetchBandwidthStats(self, interface):
     url = "http://%s/fetchif.cgi?%s" % (self.hostname, interface)
@@ -137,7 +160,7 @@ class WifiAP:
       parts = line.split("::", 1)
       if len(parts) == 2:
         d[parts[0]] = parts[1]
-      
+    #wl_mac = d.get('wl_mac' , '')
     essid = d.get('wl_ssid', '')
     wl_channel = d.get('wl_channel', '').split()[0]
     channel = int(wl_channel)
@@ -191,24 +214,23 @@ class WifiAP:
 def loop():
   rospy.init_node("wifi_ddwrt")
 
-  router_ip = rospy.get_param('~router', 'wifi-router')
-  username = rospy.get_param('~username', 'root')
-  password = rospy.get_param('~password', '')
-
-  ap = WifiAP(router_ip, username, password)
+  ap = WifiAP()
 
   pub1 = rospy.Publisher("ddwrt/sitesurvey", SiteSurvey)
   pub2 = rospy.Publisher("ddwrt/accesspoint", AccessPoint)
-
+  pub3 = rospy.Publisher("ddwrt/seen_specified_aps", CellAp)
+   
   r = rospy.Rate(.5)
   lastTime = 0
   last_ex = ''
   while not rospy.is_shutdown():
     breakUpTrash() # Needed because mechanize leaves data structures that the GC sees as uncollectable (texas#135)
     try:
-      if time.time() - lastTime > 60:
+      if time.time() - lastTime > 5:
         survey = ap.fetchSiteSurvey()
         pub1.publish(survey)
+        specified_aps = ap.fetchSpecAps(survey)
+	pub3.publish(specified_aps)
         lastTime = time.time()
       node = ap.fetchCurrentAP()
       if node: pub2.publish(node)
@@ -236,26 +258,11 @@ def test():
 def usage(progname):
   print __doc__ % vars()
 
-def main(argv, stdout, environ):
-  progname = argv[0]
-  optlist, args = getopt.getopt(argv[1:], "", ["help", "test",])
-
-  testflag = 0
-
-  for (field, val) in optlist:
-    if field == "--help":
-      usage(progname)
-      return
-    elif field == "--test":
-      testflag = 1
-
-  if testflag:
-    test()
-    return
+def main():
 
   loop()
 
 if __name__ == "__main__":
-  main(sys.argv, sys.stdout, os.environ)
+  main()
         
 

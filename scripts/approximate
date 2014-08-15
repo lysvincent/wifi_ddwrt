@@ -135,12 +135,12 @@ class PosEstimate:
       #setting the absent ap rssi to 0    
       seen_rssi.insert(index, 0)
     seen_rssi = numpy.array(seen_rssi)
-    print seen_rssi
+    #print seen_rssi
     for x in range(len(self.rssi_dict.keys())):
       for index in index_absent_aps:
         dic_rssi_arr[x][index]= 0									#by setting certain rssi to 0,the keys in the dictionary will not be affected.
 
-      print dic_rssi_arr[x]
+      #print dic_rssi_arr[x]
       dist = numpy.linalg.norm(seen_rssi - dic_rssi_arr[x])
       a = dist
       b = self.rssi_dict[dic_rssi[x]][0]								#[0] is added due to the extra set of square brackets
@@ -159,23 +159,24 @@ class PosEstimate:
         arr_pos = numpy.vstack([arr_pos,numpy.array(s_facto_list[x][1])])
 
     arr_pos = arr_pos.T
-    covar_xy = numpy.cov(arr_pos)[0][1]
+    covar = numpy.cov(arr_pos)
     mean_xy  = arr_pos.mean(axis=1)									# [x,y]
-
+    
     (trans, rot) = self.listener.lookupTransform('/map', '/base_link', rospy.Time(0))
 
     self.pose_cov.header = self.cellap.header
     self.pose_cov.header.frame_id = '/map'
-    self.pose_cov.pose.pose.position.x    = float(round(mean_xy[0],5))
-    self.pose_cov.pose.pose.position.y    = float(mean_xy[1])
+    self.pose_cov.pose.pose.position.x    = float(round(mean_xy[0],3))
+    self.pose_cov.pose.pose.position.y    = float(round(mean_xy[1],3))
     self.pose_cov.pose.pose.position.z    = float(trans[2])
     self.pose_cov.pose.pose.orientation.x = float(rot[0])
     self.pose_cov.pose.pose.orientation.y = float(rot[1])
     self.pose_cov.pose.pose.orientation.z = float(rot[2])
     self.pose_cov.pose.pose.orientation.w = float(rot[3])
-    self.pose_cov.pose.covariance[1]      = float(covar_xy)
-    self.pose_cov.pose.covariance[6]      = float(covar_xy)
-    #print type(mean_xy[0]),type(mean_xy[1]),type(rot[2]),type(rot[3]),type(covar_xy),
+    self.pose_cov.pose.covariance[0]      = covar[0][0]
+    self.pose_cov.pose.covariance[1]      = covar[0][1] 
+    self.pose_cov.pose.covariance[6]      = covar[1][0] 
+    self.pose_cov.pose.covariance[7]      = covar[1][1]
 
 
     self.pose.header             = self.cellap.header
